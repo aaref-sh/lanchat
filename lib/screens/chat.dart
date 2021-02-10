@@ -96,21 +96,46 @@ class _ChatWithState extends State<ChatWith> {
             image: DecorationImage(
                 image: AssetImage('images/chat_back.jpg'), fit: BoxFit.cover),
           ),
-          child: Column(
+          child: ListView(
+            padding: EdgeInsets.all(8.0),
             children: [
-              ListView(padding: EdgeInsets.all(8.0), children: [
+              Bubble(
+                  style: heading,
+                  child: Text('مبارح', style: TextStyle(fontSize: 10))),
+              for (int i = 0; i < 4; i++)
                 Bubble(
-                    style: heading,
-                    child: Text('مبارح', style: TextStyle(fontSize: 10))),
-                for (int i = 0; i < 4; i++)
-                  Bubble(
-                      style: bs(sender[i]),
-                      child: Text(
-                        msg[i],
-                        textAlign: ta(msg[i]),
-                        textDirection: td(msg[i]),
-                      )),
-              ]),
+                    style: bs(sender[i]),
+                    child: Text(
+                      msg[i],
+                      textAlign: ta(msg[i]),
+                      textDirection: td(msg[i]),
+                    )),
+              Container(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10, left: 2, right: 2),
+                  child: TextField(
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.center,
+                    minLines: 1,
+                    maxLines: 4,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      hintText: 'Write your status here',
+                      filled: true,
+                      fillColor: Color(0xFFDBEDFF),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           )),
     );
