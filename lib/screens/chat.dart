@@ -1,5 +1,6 @@
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/screens/texts.dart';
 
 class ChatWith extends StatefulWidget {
   @override
@@ -7,87 +8,20 @@ class ChatWith extends StatefulWidget {
 }
 
 class _ChatWithState extends State<ChatWith> {
-  // ChatWith({this.opp})
-  // final oppo;
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  bool ar(String text) {
-    if (text.length == 0) return false;
-    if (text.codeUnitAt(0) >= 0x600 && text.codeUnitAt(0) <= 0x6ff) return true;
-    if (text.codeUnitAt(0) >= 0x750 && text.codeUnitAt(0) <= 0x77f) return true;
-    if (text.codeUnitAt(0) >= 0xfb50 && text.codeUnitAt(0) <= 0xfc3f)
-      return true;
-    if (text.codeUnitAt(0) >= 0xfe70 && text.codeUnitAt(0) <= 0xfefc)
-      return true;
-    return false;
-  }
-
-  BubbleStyle me = BubbleStyle(
-    margin: BubbleEdges.only(top: 10),
-    alignment: Alignment.topRight,
-    nip: BubbleNip.rightTop,
-    elevation: 3,
-    color: Color.fromRGBO(225, 255, 199, 1.0),
-  );
-  BubbleStyle me2 = BubbleStyle(
-    margin: BubbleEdges.only(top: 2),
-    alignment: Alignment.topRight,
-    elevation: 3,
-    nip: BubbleNip.no,
-    color: Color.fromRGBO(225, 255, 199, 1.0),
-  );
-  BubbleStyle he = BubbleStyle(
-    margin: BubbleEdges.only(top: 10),
-    alignment: Alignment.topLeft,
-    elevation: 3,
-    nip: BubbleNip.leftTop,
-  );
-  BubbleStyle he2 = BubbleStyle(
-    margin: BubbleEdges.only(top: 2),
-    alignment: Alignment.topLeft,
-    elevation: 3,
-    nip: BubbleNip.no,
-  );
-  BubbleStyle heading = BubbleStyle(
-    alignment: Alignment.center,
-    color: Color.fromARGB(255, 212, 234, 244),
-    elevation: 2,
-    margin: BubbleEdges.only(top: 8.0),
-  );
-  TextAlign ta(String messag) {
-    return ar(messag) ? TextAlign.right : TextAlign.left;
-  }
-
-  TextDirection td(String message) {
-    return ar(message) ? TextDirection.rtl : TextDirection.ltr;
-  }
-
-  List<String> msg = [
+  List<String> lst = [
+    'مبارح🤣',
     'بسم الله الرحمن الرحيم',
-    'hورفعنا بعضكم فوق بعض درجات',
+    'ورفعنا بعضكم فوق بعض درجات',
     'ليتخذ بعضكم بعضا سخريا',
     'ورحمة ربك خير مما يجمعون.'
   ];
-  List<int> sender = [2, 2, 1, 1];
-  int last = 0;
-  BubbleStyle bs(int x) {
-    if (x == last) {
-      last = x;
-      return x == 1 ? me2 : he2;
-    }
-    last = x;
-    return x == 1 ? me : he;
-  }
-
+  List<int> sender = [3, 2, 2, 1, 1];
+  String msg = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Colors.indigo[900],
-          toolbarHeight: 40,
           title: Text(
             'chat with',
           )),
@@ -96,48 +30,64 @@ class _ChatWithState extends State<ChatWith> {
             image: DecorationImage(
                 image: AssetImage('images/chat_back.jpg'), fit: BoxFit.cover),
           ),
-          child: ListView(
-            padding: EdgeInsets.all(8.0),
+          child: Column(
             children: [
-              Bubble(
-                  style: heading,
-                  child: Text('مبارح', style: TextStyle(fontSize: 10))),
-              for (int i = 0; i < 4; i++)
-                Bubble(
-                    style: bs(sender[i]),
-                    child: Text(
-                      msg[i],
-                      textAlign: ta(msg[i]),
-                      textDirection: td(msg[i]),
-                    )),
-              Container(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10, left: 2, right: 2),
-                  child: TextField(
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.center,
-                    minLines: 1,
-                    maxLines: 4,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      hintText: 'Write your status here',
-                      filled: true,
-                      fillColor: Color(0xFFDBEDFF),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                    ),
+              Expanded(flex: 1, child: getlist(lst, sender)),
+              TextField(
+                onChanged: (String input) {
+                  setState(() {
+                    if (input != null) msg = input;
+                  });
+                },
+                textAlign: ta(msg),
+                textDirection: td(msg),
+                autofocus: false,
+                style: TextStyle(fontSize: 16.0, color: Color(0xFFbdc6cf)),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color(0x6F000000),
+                  hintText: 'Type here',
+                  hintStyle:
+                      TextStyle(fontSize: 16.0, color: Color(0xFFbdc6cf)),
+                  contentPadding: const EdgeInsets.only(
+                      left: 14.0, right: 14.0, bottom: 8.0, top: 8.0),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white38),
+                    borderRadius: BorderRadius.circular(25.7),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white38),
+                    borderRadius: BorderRadius.circular(25.7),
                   ),
                 ),
-              ),
+                minLines: 1,
+                maxLines: 3,
+              )
             ],
           )),
     );
   }
+}
+
+int last = 0;
+BubbleStyle bs(int x) {
+  if (x == 3) return heading;
+  if (x == last) {
+    last = x;
+    return x == 1 ? me2 : he2;
+  }
+  last = x;
+  return x == 1 ? me : he;
+}
+
+Widget getlist(List<String> lst, List<int> sender) {
+  var list = ListView.builder(itemBuilder: (context, i) {
+    print(i);
+    if (i < lst.length)
+      return Bubble(
+          style: bs(sender[i]),
+          child:
+              Text(lst[i], textAlign: ta(lst[i]), textDirection: td(lst[i])));
+  });
+  return list;
 }

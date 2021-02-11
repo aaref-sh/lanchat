@@ -74,7 +74,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                   onTap: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => ChatWith()));
-                  })
+                  }),
             ])),
             Container(
               child: Center(

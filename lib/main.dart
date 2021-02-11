@@ -8,7 +8,7 @@ void main() => runApp(MaterialApp(
       title: 'this app',
       initialRoute: '/',
       routes: {
-        "/": (context) => Dosplash(),
+        "/": (context) => Home(),
         "/home": (context) => Home(),
         "/chat": (context) => ChatWith(),
         "/fancy": (context) => Fancy(),
