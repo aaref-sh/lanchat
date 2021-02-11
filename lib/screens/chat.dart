@@ -19,7 +19,6 @@ class _ChatWithState extends State<ChatWith> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     textFieldController = new TextEditingController()
@@ -32,7 +31,7 @@ class _ChatWithState extends State<ChatWith> {
 
   List<String> lst = [
     'مبارح🤣',
-    'بسم الله الرحمن الرحيم',
+    'أم آتيناهم ',
     'ورفعنا بعضكم فوق بعض درجات',
     'ليتخذ بعضكم بعضا سخريا',
     'ورحمة ربك خير مما يجمعون.'
@@ -41,23 +40,6 @@ class _ChatWithState extends State<ChatWith> {
   String msg = '';
   @override
   Widget build(BuildContext context) {
-    List<String> _tabsname = ["🙂", "Fruits", "Fruits", "Asif"];
-    List<dynamic> _tabsemoji = [
-      ["☕", "❤", "☕", "☕", "☕", "❤"],
-      ["☕", "❤", "☕", "☕", "☕", "❤", "☕", "❤", "☕", "☕", "☕", "❤"],
-      [
-        "☕",
-        "❤",
-        "☕",
-        "☕",
-        "☕",
-        "❤",
-        "☕",
-        "❤",
-        "☕",
-      ]
-    ];
-
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Colors.indigo[900],
@@ -184,8 +166,8 @@ class _ChatWithState extends State<ChatWith> {
 
                   //MOST IMP
                   Emojies(
-                      tabsname: _tabsname,
-                      tabsemoji: _tabsemoji,
+                      tabsname: tabsname,
+                      tabsemoji: tabsemoji,
                       maxheight: emojiheight,
                       inputtext: textFieldController,
                       bgcolor: Colors.white),
