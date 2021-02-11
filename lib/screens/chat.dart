@@ -96,7 +96,7 @@ class _ChatWithState extends State<ChatWith> {
                                     //MOST IMP
                                     if (emojiheight == 0.0) {
                                       setState(() {
-                                        emojiheight = 255.0;
+                                        emojiheight = 200.0;
                                       });
                                     } else {
                                       setState(() {
@@ -107,14 +107,9 @@ class _ChatWithState extends State<ChatWith> {
                                 ),
                                 Flexible(
                                   child: TextField(
-                                    onChanged: (String input) {
-                                      setState(() {
-                                        if (input != null) msg = input;
-                                      });
-                                    },
                                     style: TextStyle(color: Color(0xFFFFFFFF)),
-                                    textAlign: ta(msg),
-                                    textDirection: td(msg),
+                                    textAlign: ta(_message),
+                                    textDirection: td(_message),
                                     autofocus: false,
                                     autocorrect: false,
                                     controller: textFieldController,
@@ -170,7 +165,7 @@ class _ChatWithState extends State<ChatWith> {
                       tabsemoji: tabsemoji,
                       maxheight: emojiheight,
                       inputtext: textFieldController,
-                      bgcolor: Colors.white),
+                      bgcolor: Color(0x70000000)),
                 ],
               ),
             ],
@@ -191,6 +186,7 @@ BubbleStyle bs(int x) {
 }
 
 Widget getlist(List<String> lst, List<int> sender) {
+  // ignore: missing_return
   var list = ListView.builder(itemBuilder: (context, i) {
     print(i);
     if (i < lst.length)
