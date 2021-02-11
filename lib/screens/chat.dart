@@ -1,6 +1,7 @@
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/texts.dart';
+import 'package:emoji_pick/emoji_pick.dart';
 
 class ChatWith extends StatefulWidget {
   @override
@@ -8,6 +9,27 @@ class ChatWith extends StatefulWidget {
 }
 
 class _ChatWithState extends State<ChatWith> {
+  List<String> _messages = [];
+  String _message = '';
+
+  //MOST IMP
+  var emojiheight = 0.0;
+
+  TextEditingController textFieldController;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    textFieldController = new TextEditingController()
+      ..addListener(() {
+        setState(() {
+          _message = textFieldController.text;
+        });
+      });
+  }
+
   List<String> lst = [
     'مبارح🤣',
     'بسم الله الرحمن الرحيم',
@@ -19,6 +41,23 @@ class _ChatWithState extends State<ChatWith> {
   String msg = '';
   @override
   Widget build(BuildContext context) {
+    List<String> _tabsname = ["🙂", "Fruits", "Fruits", "Asif"];
+    List<dynamic> _tabsemoji = [
+      ["☕", "❤", "☕", "☕", "☕", "❤"],
+      ["☕", "❤", "☕", "☕", "☕", "❤", "☕", "❤", "☕", "☕", "☕", "❤"],
+      [
+        "☕",
+        "❤",
+        "☕",
+        "☕",
+        "☕",
+        "❤",
+        "☕",
+        "❤",
+        "☕",
+      ]
+    ];
+
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Colors.indigo[900],
@@ -32,37 +71,126 @@ class _ChatWithState extends State<ChatWith> {
           ),
           child: Column(
             children: [
-              Expanded(flex: 1, child: getlist(lst, sender)),
-              TextField(
-                onChanged: (String input) {
-                  setState(() {
-                    if (input != null) msg = input;
-                  });
-                },
-                textAlign: ta(msg),
-                textDirection: td(msg),
-                autofocus: false,
-                style: TextStyle(fontSize: 16.0, color: Color(0xFFbdc6cf)),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color(0x6F000000),
-                  hintText: 'Type here',
-                  hintStyle:
-                      TextStyle(fontSize: 16.0, color: Color(0xFFbdc6cf)),
-                  contentPadding: const EdgeInsets.only(
-                      left: 14.0, right: 14.0, bottom: 8.0, top: 8.0),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white38),
-                    borderRadius: BorderRadius.circular(25.7),
+              Expanded(
+                  flex: 1,
+                  child: Padding(
+                      padding: EdgeInsets.only(left: 5, right: 5),
+                      child: getlist(lst, sender))),
+              Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: <Widget>[
+                        Flexible(
+                          flex: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.all(
+                                    const Radius.circular(30.0)),
+                                color: Color(0x60000000),
+                                border: Border.all(
+                                  color: Colors.blue[400],
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  new BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 10,
+                                      spreadRadius: 4)
+                                ]),
+                            child: Row(
+                              children: <Widget>[
+                                IconButton(
+                                  padding: const EdgeInsets.all(0.0),
+                                  //     splashColor: Colors.white,
+                                  //    hoverColor: Colors.white,
+                                  //    highlightColor: Colors.white,
+                                  disabledColor: Colors.grey,
+                                  color: Colors.blue[300],
+                                  icon: Icon(Icons.insert_emoticon),
+                                  onPressed: () {
+                                    //MOST IMP
+                                    if (emojiheight == 0.0) {
+                                      setState(() {
+                                        emojiheight = 255.0;
+                                      });
+                                    } else {
+                                      setState(() {
+                                        emojiheight = 0.0;
+                                      });
+                                    }
+                                  },
+                                ),
+                                Flexible(
+                                  child: TextField(
+                                    onChanged: (String input) {
+                                      setState(() {
+                                        if (input != null) msg = input;
+                                      });
+                                    },
+                                    style: TextStyle(color: Color(0xFFFFFFFF)),
+                                    textAlign: ta(msg),
+                                    textDirection: td(msg),
+                                    autofocus: false,
+                                    autocorrect: false,
+                                    controller: textFieldController,
+                                    onTap: () {
+                                      //MOST IMP
+                                      setState(() {
+                                        emojiheight = 0.0;
+                                      });
+                                    },
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.only(right: 14.0),
+                                      hintText: 'Type a message',
+                                      hintStyle: TextStyle(
+                                          fontSize: 16.0, color: Colors.white),
+                                      counterText: '',
+                                    ),
+                                    minLines: 1,
+                                    maxLines: 3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: FloatingActionButton(
+                            elevation: 2.0,
+                            backgroundColor: Colors.blue[400],
+                            foregroundColor: Colors.white,
+                            child: Icon(Icons.send),
+                            onPressed: () {
+                              setState(() {
+                                _messages
+                                    .add(textFieldController.text.toString());
+                              });
+
+                              textFieldController.clear();
+                            },
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white38),
-                    borderRadius: BorderRadius.circular(25.7),
-                  ),
-                ),
-                minLines: 1,
-                maxLines: 3,
-              )
+
+                  //MOST IMP
+                  Emojies(
+                      tabsname: _tabsname,
+                      tabsemoji: _tabsemoji,
+                      maxheight: emojiheight,
+                      inputtext: textFieldController,
+                      bgcolor: Colors.white),
+                ],
+              ),
             ],
           )),
     );
