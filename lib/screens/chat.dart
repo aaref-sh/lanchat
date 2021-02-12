@@ -1,26 +1,29 @@
+import 'dart:async';
+
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/texts.dart';
 import 'package:emoji_pick/emoji_pick.dart';
+//import 'package:intl/intl.dart';
 
 class ChatWith extends StatefulWidget {
   @override
   _ChatWithState createState() => _ChatWithState();
 }
 
+int this_user = 1;
+
 class _ChatWithState extends State<ChatWith> {
   List<String> _messages = [];
   String _message = '';
-
   //MOST IMP
   var emojiheight = 0.0;
 
   TextEditingController textFieldController;
-
+  final _controller = ScrollController();
   @override
   void initState() {
     super.initState();
-
     textFieldController = new TextEditingController()
       ..addListener(() {
         setState(() {
@@ -36,10 +39,18 @@ class _ChatWithState extends State<ChatWith> {
     'ليتخذ بعضكم بعضا سخريا',
     'ورحمة ربك خير مما يجمعون.'
   ];
-  List<int> sender = [3, 2, 2, 1, 1];
+  List<int> sender = [3, 2, 2, 1, 2];
   String msg = '';
   @override
   Widget build(BuildContext context) {
+    Timer(
+      Duration(seconds: 1),
+      () => _controller.animateTo(
+        _controller.position.maxScrollExtent,
+        duration: Duration(milliseconds: 200),
+        curve: Curves.fastOutSlowIn,
+      ),
+    );
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Colors.indigo[900],
@@ -94,15 +105,8 @@ class _ChatWithState extends State<ChatWith> {
                                   icon: Icon(Icons.insert_emoticon),
                                   onPressed: () {
                                     //MOST IMP
-                                    if (emojiheight == 0.0) {
-                                      setState(() {
-                                        emojiheight = 200.0;
-                                      });
-                                    } else {
-                                      setState(() {
-                                        emojiheight = 0.0;
-                                      });
-                                    }
+                                    setState(() => emojiheight =
+                                        emojiheight == 0.0 ? 200.0 : 0.0);
                                   },
                                 ),
                                 Flexible(
@@ -146,11 +150,14 @@ class _ChatWithState extends State<ChatWith> {
                             foregroundColor: Colors.white,
                             child: Icon(Icons.send),
                             onPressed: () {
-                              setState(() {
-                                _messages
-                                    .add(textFieldController.text.toString());
-                              });
-
+                              if (_message != null && _message != '') {
+                                setState(() {
+                                  _messages
+                                      .add(textFieldController.text.toString());
+                                  lst.add(_message);
+                                  sender.add(this_user);
+                                });
+                              }
                               textFieldController.clear();
                             },
                           ),
@@ -172,6 +179,24 @@ class _ChatWithState extends State<ChatWith> {
           )),
     );
   }
+
+  Widget getlist(List<String> lst, List<int> sender) {
+    var list = ListView.builder(
+        controller: _controller,
+
+        //reverse: true,
+        //shrinkWrap: true,
+        // ignore: missing_return
+        itemBuilder: (context, i) {
+          //print(i);
+          if (i < lst.length)
+            return Bubble(
+                style: bs(sender[i]),
+                child: Text(lst[i],
+                    textAlign: ta(lst[i]), textDirection: td(lst[i])));
+        });
+    return list;
+  }
 }
 
 int last = 0;
@@ -179,21 +204,8 @@ BubbleStyle bs(int x) {
   if (x == 3) return heading;
   if (x == last) {
     last = x;
-    return x == 1 ? me2 : he2;
+    return x == this_user ? me2 : he2;
   }
   last = x;
-  return x == 1 ? me : he;
-}
-
-Widget getlist(List<String> lst, List<int> sender) {
-  // ignore: missing_return
-  var list = ListView.builder(itemBuilder: (context, i) {
-    print(i);
-    if (i < lst.length)
-      return Bubble(
-          style: bs(sender[i]),
-          child:
-              Text(lst[i], textAlign: ta(lst[i]), textDirection: td(lst[i])));
-  });
-  return list;
+  return x == this_user ? me : he;
 }
