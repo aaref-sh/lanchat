@@ -6,6 +6,7 @@ import 'package:flutter_app/screens/texts.dart';
 import 'package:emoji_pick/emoji_pick.dart';
 import 'package:flutter_app/models/chats.dart';
 import 'package:flutter_app/models/databasehelper.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 //import 'package:intl/intl.dart';
 
@@ -29,7 +30,12 @@ class _ChatWithState extends State<ChatWith> {
   @override
   void initState() {
     super.initState();
-    textFieldController = new TextEditingController()..addListener(() {});
+    textFieldController = new TextEditingController()
+      ..addListener(() {
+        setState(() {
+          _message = textFieldController.text.trim();
+        });
+      });
   }
 
   Databasehelper databasehelper = Databasehelper();
@@ -41,7 +47,7 @@ class _ChatWithState extends State<ChatWith> {
   @override
   Widget build(BuildContext context) {
     if (msglist == null && firstload) {
-      msglist = List<Message>();
+      msglist = <Message>[];
       updatemessagelist();
       firstload = false;
     }
@@ -129,6 +135,7 @@ class _ChatWithState extends State<ChatWith> {
                           onTap: () {
                             //MOST IMP
                             setState(() {
+                              _message = textFieldController.text;
                               emojiheight = 0.0;
                             });
                           },
@@ -156,13 +163,13 @@ class _ChatWithState extends State<ChatWith> {
                   backgroundColor: Colors.blue[400],
                   foregroundColor: Colors.white,
                   child: Icon(Icons.send),
-                  onPressed: () {
-                    String mesg = textFieldController.text;
+                  onPressed: () async {
                     // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
-                    if (mesg != null && mesg != '') {
+                    if (_message != null && _message != '') {
+                      Message ms = Message(this_user, other_user, _message);
+                      ms.id = await databasehelper.insertMsg(ms);
+                      ms.date = DateTime.now();
                       setState(() {
-                        Message ms = Message(this_user, other_user, mesg);
-                        databasehelper.insertMsg(ms);
                         msglist.add(ms);
                         count++;
                         //updatemessagelist();
@@ -199,9 +206,23 @@ class _ChatWithState extends State<ChatWith> {
             },
             child: Bubble(
                 style: bs(msglist[i].sender),
-                child: Text(this.msglist[i].msg,
-                    textAlign: ta(this.msglist[i].msg),
-                    textDirection: td(this.msglist[i].msg))),
+                child: Container(
+                  child: Column(
+                    children: [
+                      Text(this.msglist[i].msg,
+                          textAlign: ta(this.msglist[i].msg),
+                          textDirection: td(this.msglist[i].msg)),
+                      Text(
+                        DateFormat('hh:mm a').format(this.msglist[i].date),
+                        // this.msglist[i].date.toString(),
+                        textAlign: this.msglist[i].sender == this_user
+                            ? TextAlign.right
+                            : TextAlign.left,
+                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                )),
           );
         });
     last = 0;

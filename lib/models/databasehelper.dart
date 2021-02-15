@@ -82,7 +82,7 @@ class Databasehelper {
   Future<List<Message>> getMessaeList(int sender, int reciver) async {
     var msgMapList = await getMsgMap(sender, reciver);
     int count = msgMapList.length;
-    List<Message> msgList = List<Message>();
+    List<Message> msgList = <Message>[];
     for (int i = 0; i < count; i++) {
       msgList.add(Message.fromMap(msgMapList[i]));
     }

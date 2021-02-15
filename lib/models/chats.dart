@@ -11,6 +11,8 @@ class Message {
   int get reciver => _reciver;
   String get msg => _msg;
   DateTime get date => _date;
+  set id(int id) => this._id = id;
+  set date(DateTime date) => this._date = date;
 
   set msg(String newmsg) {
     if (newmsg.length < 200) this._msg = newmsg;
@@ -30,5 +32,6 @@ class Message {
     this._msg = map['msg'].toString();
     this._sender = int.parse(map['sender'].toString());
     this._reciver = int.parse(map['reciver'].toString());
+    this._date = DateTime.parse(map['date'].toString());
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/chat.dart';
+import 'package:flutter_app/screens/client.dart';
 import 'package:motion_tab_bar/MotionTabBarView.dart';
 import 'package:motion_tab_bar/MotionTabController.dart';
 import 'package:motion_tab_bar/motiontabbar.dart';
@@ -74,6 +75,15 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                   onTap: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => ChatWith()));
+                  }),
+              ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text("the man"),
+                  subtitle: Text("Click to chat"),
+                  trailing: Icon(Icons.message),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => Myclient()));
                   }),
             ])),
             Container(
