@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'chat.dart';
 
 int last = 0;
-BubbleStyle bs(int x) {
-  if (x == 3) return heading;
-  if (x == last) {
+BubbleStyle bs(int x, int i) {
+  if (x == 0) return heading;
+  if (i == 0 || msglist[i].sender != msglist[i - 1].sender) {
     last = x;
-    return x == this_user ? me2 : he2;
+    return x == this_user ? me : he;
   }
   last = x;
-  return x == this_user ? me : he;
+  return x == this_user ? me2 : he2;
 }
 
 BubbleStyle me = BubbleStyle(

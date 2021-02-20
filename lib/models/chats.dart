@@ -12,6 +12,8 @@ class Message {
   String get msg => _msg;
   DateTime get date => _date;
   set id(int id) => this._id = id;
+  set sender(int sender) => this._sender = sender;
+  set reciever(int reciever) => this._reciver = reciever;
   set date(DateTime date) => this._date = date;
 
   set msg(String newmsg) {
