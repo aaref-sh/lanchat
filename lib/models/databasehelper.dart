@@ -9,7 +9,7 @@ class Databasehelper {
   String chattable = 'message';
   String colid = 'id';
   String colsender = 'sender';
-  String colreciver = 'reciver';
+  String colreceiver = 'receiver';
   String colmsg = 'msg';
   String coldate = 'date';
 
@@ -37,20 +37,21 @@ class Databasehelper {
   void _crearedb(Database db, int newvers) async {
     await db.execute(
         '''CREATE TABLE $chattable ($colid INTEGER PRIMARY KEY AUTOINCREMENT, $colmsg TEXT, 
-        $colsender TEXT,$colreciver TEXT,$coldate DATETIME DEFAULT (DATETIME('now')))''');
+        $colsender TEXT,$colreceiver TEXT,$coldate DATETIME DEFAULT (DATETIME('now')))''');
 
-    query("insert into message (sender,reciver,msg) values (1,5,'Hi')");
+    query("insert into message (sender,receiver,msg) values (1,5,'Hi')");
     query(
-        "insert into message (sender,reciver,msg) values (5,1,'السلام عليكم')");
-    query("insert into message (sender,reciver,msg) values (5,1,'Hi you too')");
+        "insert into message (sender,receiver,msg) values (5,1,'السلام عليكم')");
+    query(
+        "insert into message (sender,receiver,msg) values (5,1,'Hi you too')");
   }
 
-  Future<List<Map<String, dynamic>>> getMsgMap(int sender, int reciver) async {
+  Future<List<Map<String, dynamic>>> getMsgMap(int sender, int receiver) async {
     Database db = await this.database;
     var result = await db.query(chattable,
         where:
-            '($colsender = ? and $colreciver = ?) OR ($colsender = ? and $colreciver = ?)',
-        whereArgs: [sender, reciver, reciver, sender]);
+            '($colsender = ? and $colreceiver = ?) OR ($colsender = ? and $colreceiver = ?)',
+        whereArgs: [sender, receiver, receiver, sender]);
     return result;
   }
 
@@ -72,15 +73,15 @@ class Databasehelper {
     await db.execute(query);
   }
 
-  Future<int> getcount(int sender, int reciver) async {
+  Future<int> getcount(int sender, int receiver) async {
     Database db = await this.database;
     List<Map<String, dynamic>> x = await db.rawQuery(
-        'Select * FROM $chattable WHERE ( $colsender = $sender AND $colreciver = $reciver )OR ($colreciver = $sender AND $colsender = $reciver )');
+        'Select * FROM $chattable WHERE ( $colsender = $sender AND $colreceiver = $receiver )OR ($colreceiver = $sender AND $colsender = $receiver )');
     return Sqflite.firstIntValue(x);
   }
 
-  Future<List<Message>> getMessaeList(int sender, int reciver) async {
-    var msgMapList = await getMsgMap(sender, reciver);
+  Future<List<Message>> getMessaeList(int sender, int receiver) async {
+    var msgMapList = await getMsgMap(sender, receiver);
     int count = msgMapList.length;
     List<Message> msgList = <Message>[];
     for (int i = 0; i < count; i++) {

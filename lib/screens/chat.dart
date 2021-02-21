@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'main_screen.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/texts.dart';
@@ -16,15 +16,12 @@ class ChatWith extends StatefulWidget {
   _ChatWithState createState() => _ChatWithState();
 }
 
-// ignore: non_constant_identifier_names
-int this_user = 1;
-// ignore: non_constant_identifier_names
-int other_user = 2;
-
 List<Message> msglist;
 bool firstload = true;
 
 class _ChatWithState extends State<ChatWith> {
+  // ignore: non_constant_identifier_names
+  int other_user = 1;
   String _message = '';
   var emojiheight = 0.0;
   Databasehelper databasehelper = Databasehelper();
@@ -280,7 +277,7 @@ class _ChatWithState extends State<ChatWith> {
 
   // ignore: non_constant_identifier_names
   void import_new_messages() async {
-    Map<String, String> imp = {"reciever": "$this_user"};
+    Map<String, String> imp = {"receiver": "$this_user"};
     var url = "http://192.168.1.111:80/api/values/gets";
     var body = json.encode(imp);
 
@@ -294,19 +291,20 @@ class _ChatWithState extends State<ChatWith> {
     Message ms;
     String msg, dat;
     int sender;
-    for (int i = 0; i < responseJson.length; i++) {
-      msg = responseJson[i]["msg"];
-      sender = responseJson[i]["sender"];
-      ms = Message(sender, this_user, msg);
-      ms.id = await databasehelper.insertMsg(ms);
-      if (sender == other_user) {
-        dat = responseJson[i]["date"].toString().replaceAll('T', ' ');
-        ms.date = DateTime.parse(dat);
-        msglist.add(ms);
-        count++;
+    if (responseJson != null)
+      for (int i = 0; i < responseJson.length; i++) {
+        msg = responseJson[i]["msg"];
+        sender = responseJson[i]["sender"];
+        ms = Message(sender, this_user, msg);
+        ms.id = await databasehelper.insertMsg(ms);
+        if (sender == other_user) {
+          dat = responseJson[i]["date"].toString().replaceAll('T', ' ');
+          ms.date = DateTime.parse(dat);
+          msglist.add(ms);
+          count++;
+        }
       }
-    }
     print(responseJson);
-    // setState(() {});
+    setState(() {});
   }
 }

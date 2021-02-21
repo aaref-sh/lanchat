@@ -1,6 +1,7 @@
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'chat.dart';
+import 'main_screen.dart';
 
 int last = 0;
 BubbleStyle bs(int x, int i) {

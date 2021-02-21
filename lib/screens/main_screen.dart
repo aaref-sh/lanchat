@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/chat.dart';
 import 'package:motion_tab_bar/MotionTabBarView.dart';
@@ -21,17 +23,24 @@ class Tabber extends StatefulWidget {
   _TabberState createState() => _TabberState();
 }
 
+// ignore: non_constant_identifier_names
+int this_user = 2;
+
 class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   MotionTabController _tabController;
-
+  Timer timer;
+  int val = 0;
   @override
   void initState() {
     super.initState();
+
+    // timer = Timer.periodic(Duration(milliseconds: 300), (Timer t) => print(val++));
     _tabController = MotionTabController(initialIndex: 1, vsync: this);
   }
 
   @override
   void dispose() {
+    timer?.cancel();
     super.dispose();
     _tabController.dispose();
   }
