@@ -38,20 +38,11 @@ class Databasehelper {
     await db.execute(
         '''CREATE TABLE $chattable ($colid INTEGER PRIMARY KEY AUTOINCREMENT, $colmsg TEXT, 
         $colsender TEXT,$colreceiver TEXT,$coldate DATETIME DEFAULT (DATETIME('now')))''');
-
-    query("insert into message (sender,receiver,msg) values (1,5,'Hi')");
-    query(
-        "insert into message (sender,receiver,msg) values (5,1,'السلام عليكم')");
-    query(
-        "insert into message (sender,receiver,msg) values (5,1,'Hi you too')");
   }
 
-  Future<List<Map<String, dynamic>>> getMsgMap(int sender, int receiver) async {
+  Future<List<Map<String, dynamic>>> getMsgMap() async {
     Database db = await this.database;
-    var result = await db.query(chattable,
-        where:
-            '($colsender = ? and $colreceiver = ?) OR ($colsender = ? and $colreceiver = ?)',
-        whereArgs: [sender, receiver, receiver, sender]);
+    var result = await db.query(chattable);
     return result;
   }
 
@@ -80,8 +71,8 @@ class Databasehelper {
     return Sqflite.firstIntValue(x);
   }
 
-  Future<List<Message>> getMessaeList(int sender, int receiver) async {
-    var msgMapList = await getMsgMap(sender, receiver);
+  Future<List<Message>> getMessaeList() async {
+    var msgMapList = await getMsgMap();
     int count = msgMapList.length;
     List<Message> msgList = <Message>[];
     for (int i = 0; i < count; i++) {

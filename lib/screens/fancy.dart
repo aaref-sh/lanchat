@@ -1,5 +1,6 @@
 import 'package:fancy_on_boarding/fancy_on_boarding.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/widget/button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
 
@@ -43,16 +44,21 @@ final pageList = [
 class Fancy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    _save();
     return Scaffold(
       body: FancyOnBoarding(
           doneButtonText: "Done",
           skipButtonText: "Skip",
           pageList: pageList,
-          onDoneButtonPressed: () => Navigator.pushReplacement(
-              context, new MaterialPageRoute(builder: (context) => Home())),
-          onSkipButtonPressed: () => Navigator.pushReplacement(
-              context, new MaterialPageRoute(builder: (context) => Home()))),
+          onDoneButtonPressed: () async {
+            await _save();
+            return Navigator.pushReplacement(
+                context, new MaterialPageRoute(builder: (context) => Home()));
+          },
+          onSkipButtonPressed: () async {
+            await _save();
+            return Navigator.pushReplacement(
+                context, new MaterialPageRoute(builder: (context) => Home()));
+          }),
     );
   }
 }

@@ -12,30 +12,30 @@ import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ChatWith extends StatefulWidget {
+  final int userId; // receives the value
+
+  ChatWith({Key key, this.userId}) : super(key: key);
   @override
   _ChatWithState createState() => _ChatWithState();
 }
 
-List<Message> msglist;
 bool firstload = true;
+int other_user = 1;
 
 class _ChatWithState extends State<ChatWith> {
   // ignore: non_constant_identifier_names
-  int other_user = 1;
+
   String _message = '';
   var emojiheight = 0.0;
-  Databasehelper databasehelper = Databasehelper();
   TextEditingController textFieldController;
   final _controller = ScrollController();
 
   Timer timer;
-  int count = 0;
 
   @override
   void initState() {
+    other_user = widget.userId;
     super.initState();
-    timer = Timer.periodic(
-        Duration(milliseconds: 300), (Timer t) => import_new_messages());
     textFieldController = new TextEditingController()
       ..addListener(() {
         setState(() {
@@ -52,25 +52,11 @@ class _ChatWithState extends State<ChatWith> {
 
   @override
   Widget build(BuildContext context) {
-    if (msglist != null) count = msglist.length;
-    if (msglist == null) {
-      msglist = <Message>[];
-      updatemessagelist();
-      firstload = false;
-    }
-    // Timer(
-    //   Duration(seconds: 1),
-    //   () => _controller.animateTo(
-    //     _controller.position.maxScrollExtent,
-    //     duration: Duration(milliseconds: 200),
-    //     curve: Curves.fastOutSlowIn,
-    //   ),
-    // );
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: Colors.indigo[900],
+          backgroundColor: Colors.blue[400],
           title: Text(
-            'chat with',
+            'chat with $other_user',
           )),
       body: Container(
           decoration: BoxDecoration(
@@ -170,32 +156,7 @@ class _ChatWithState extends State<ChatWith> {
                   backgroundColor: Colors.blue[400],
                   foregroundColor: Colors.white,
                   child: Icon(Icons.send),
-                  onPressed: () async {
-                    // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
-                    if (_message != null && _message != '') {
-                      Message ms = Message(this_user, other_user, _message);
-                      ms.id = await databasehelper.insertMsg(ms);
-                      ms.date = DateTime.now();
-                      var url = "http://192.168.1.111:80/api/values/insert";
-                      var body = json.encode(ms.toMap());
-
-                      Map<String, String> headers = {
-                        'Content-type': 'application/json',
-                        'Accept': 'application/json',
-                      };
-
-                      http.Response response =
-                          await http.post(url, body: body, headers: headers);
-                      final responseJson = json.decode(response.body);
-                      print(responseJson);
-                      setState(() {
-                        msglist.add(ms);
-                        count++;
-                        //updatemessagelist();
-                      });
-                    }
-                    textFieldController.clear();
-                  },
+                  onPressed: sendMessageButtonPress,
                 ),
               )
             ],
@@ -213,14 +174,42 @@ class _ChatWithState extends State<ChatWith> {
     );
   }
 
+  void sendMessageButtonPress() async {
+    // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
+    if (_message != null && _message != '') {
+      Message ms = Message(this_user, other_user, _message);
+      ms.id = await databasehelper.insertMsg(ms);
+      ms.date = DateTime.now();
+      var url = "http://192.168.1.111:80/api/values/insert";
+      var body = json.encode(ms.toMap());
+
+      Map<String, String> headers = {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      http.Response response =
+          await http.post(url, body: body, headers: headers);
+      final responseJson = json.decode(response.body);
+      print(responseJson);
+      setState(() {
+        messageList[other_user].add(ms);
+        messageCount[other_user]++;
+        //updatemessagelist();
+      });
+    }
+    textFieldController.clear();
+  }
+
   Widget getlist() {
+    int count = messageCount[other_user];
     var list = ListView.builder(
         itemCount: count,
         reverse: true,
         shrinkWrap: true,
         controller: _controller,
         itemBuilder: (BuildContext context, int i) {
-          Message msg = msglist[count - i - 1];
+          Message msg = messageList[other_user][count - i - 1];
           return GestureDetector(
             onLongPress: () {
               print(msg.id);
@@ -253,58 +242,10 @@ class _ChatWithState extends State<ChatWith> {
     int result = await databasehelper.deleteMsg(messageid);
     setState(() {
       if (result != 0) {
-        count--;
-        msglist.removeWhere((element) => element.id == messageid);
+        messageCount[other_user]--;
+        messageList[other_user]
+            .removeWhere((element) => element.id == messageid);
       }
     });
-  }
-
-  void updatemessagelist() {
-    final Future<Database> dbFuture = databasehelper.initializedatabase();
-    dbFuture.then((database) {
-      Future<List<Message>> messageListFuture =
-          databasehelper.getMessaeList(this_user, other_user);
-      messageListFuture.then((messageList) {
-        setState(() {
-          msglist.clear();
-          msglist = messageList;
-          this.count = messageList.length;
-        });
-      });
-    });
-    print(this.count);
-  }
-
-  // ignore: non_constant_identifier_names
-  void import_new_messages() async {
-    Map<String, String> imp = {"receiver": "$this_user"};
-    var url = "http://192.168.1.111:80/api/values/gets";
-    var body = json.encode(imp);
-
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    http.Response response = await http.post(url, body: body, headers: headers);
-    List<dynamic> responseJson = json.decode(response.body);
-    Message ms;
-    String msg, dat;
-    int sender;
-    if (responseJson != null)
-      for (int i = 0; i < responseJson.length; i++) {
-        msg = responseJson[i]["msg"];
-        sender = responseJson[i]["sender"];
-        ms = Message(sender, this_user, msg);
-        ms.id = await databasehelper.insertMsg(ms);
-        if (sender == other_user) {
-          dat = responseJson[i]["date"].toString().replaceAll('T', ' ');
-          ms.date = DateTime.parse(dat);
-          msglist.add(ms);
-          count++;
-        }
-      }
-    print(responseJson);
-    setState(() {});
   }
 }

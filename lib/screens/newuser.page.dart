@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/widget/buttonNewUser.dart';
-import 'package:flutter_app/widget/newEmail.dart';
 import 'package:flutter_app/widget/newName.dart';
 import 'package:flutter_app/widget/password.dart';
 import 'package:flutter_app/widget/singup.dart';

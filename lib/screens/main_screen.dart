@@ -1,11 +1,15 @@
 import 'dart:async';
-
+import 'dart:convert';
+import 'package:flutter_app/models/chats.dart';
+import 'package:flutter_app/models/databasehelper.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/chat.dart';
 import 'package:motion_tab_bar/MotionTabBarView.dart';
 import 'package:motion_tab_bar/MotionTabController.dart';
 import 'package:motion_tab_bar/motiontabbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 class Home extends StatelessWidget {
   @override
@@ -13,6 +17,11 @@ class Home extends StatelessWidget {
     return Tabber(title: 'Motion Tab Bar Sample');
   }
 }
+
+Databasehelper databasehelper = Databasehelper();
+Map<int, List<Message>> messageList;
+Map<int, int> messageCount = {};
+Set<int> ids = {};
 
 class Tabber extends StatefulWidget {
   Tabber({Key key, this.title}) : super(key: key);
@@ -25,6 +34,7 @@ class Tabber extends StatefulWidget {
 
 // ignore: non_constant_identifier_names
 int this_user = 2;
+bool b = true;
 
 class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   MotionTabController _tabController;
@@ -32,10 +42,14 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   int val = 0;
   @override
   void initState() {
+    //updatemessagelist();
     super.initState();
 
+    timer = Timer.periodic(
+        Duration(milliseconds: 400), (Timer t) => importnewmessages());
     // timer = Timer.periodic(Duration(milliseconds: 300), (Timer t) => print(val++));
     _tabController = MotionTabController(initialIndex: 1, vsync: this);
+    setState(() {});
   }
 
   @override
@@ -47,6 +61,11 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    if (ids.isEmpty && b) {
+      updatemessagelist();
+      b = false;
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -73,18 +92,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                 child: Text("Account"),
               ),
             ),
-            Container(
-                child: ListView(children: [
-              ListTile(
-                  leading: Icon(Icons.person),
-                  title: Text("the chat"),
-                  subtitle: Text("Click to chat"),
-                  trailing: Icon(Icons.message),
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => ChatWith()));
-                  }),
-            ])),
+            Container(child: chatList()),
             Container(
               child: Center(
                 child: Text("Dashboard"),
@@ -93,53 +101,76 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
           ],
         ));
   }
-}
 
-class Mimg extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    AssetImage ass = AssetImage("images/grid.png");
-    Image img = Image(image: ass);
-    return Container(
-      child: img,
-      width: 150,
-      height: 150,
-    );
-  }
-}
-
-class Gfys extends StatelessWidget {
-  Gfys({this.b});
-  final bool b;
-  Widget build(BuildContext context) {
-    return Container(
-      child: RaisedButton(
-        onPressed: () {
-          _save(b);
-          doalert(context, b);
-        },
-        color: Colors.black54,
-        child: Text(
-          b ? "visited" : "unvisited",
-          style: TextStyle(color: Colors.blue),
-        ),
-        elevation: 3,
-      ),
-    );
+  chatList() {
+    int count = ids.length;
+    var list = ListView.builder(
+        itemCount: count,
+        itemBuilder: (BuildContext context, int i) {
+          return ListTile(
+            title: Text(ids.elementAt(i).toString()),
+            subtitle: Text("chat with ${ids.elementAt(i)}"),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ChatWith(userId: ids.elementAt(i)))),
+            leading: Icon(Icons.message),
+          );
+        });
+    return list;
   }
 
-  void doalert(BuildContext context, bool state) => showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-            title: Text(state ? "visited" : "unvisited"),
-            content: Text(state ? "fancy is on" : "fancy is off"),
-          ));
-}
+  void importnewmessages() async {
+    Map<String, String> imp = {"receiver": "$this_user"};
+    var url = "http://192.168.1.111:80/api/values/gets";
+    var body = json.encode(imp);
 
-_save(bool b) async {
-  final prefs = await SharedPreferences.getInstance();
-  final key = 'vis';
-  final value = b ? 1 : 0;
-  prefs.setInt(key, value);
-  print('saved $value');
+    Map<String, String> headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    http.Response response = await http.post(url, body: body, headers: headers);
+    List<dynamic> responseJson = json.decode(response.body);
+    Message ms;
+    String msg;
+    int sender;
+    if (responseJson != null)
+      for (int i = 0; i < responseJson.length; i++) {
+        msg = responseJson[i]["msg"];
+        sender = responseJson[i]["sender"];
+        ms = Message(sender, this_user, msg);
+        ms.id = await databasehelper.insertMsg(ms);
+      }
+    print(responseJson);
+  }
+
+  updatemessagelist() {
+    final Future<Database> dbFuture = databasehelper.initializedatabase();
+    dbFuture.then((database) {
+      Future<List<Message>> messageListFuture = databasehelper.getMessaeList();
+      messageListFuture.then((msglst) {
+        messageList = {};
+        for (int i = 0; i < msglst.length; i++) {
+          Message m = msglst[i];
+          if (m.sender == this_user) {
+            ids.add(m.receiver);
+            if (messageList[m.receiver] == null)
+              messageList[m.receiver] = <Message>[];
+            messageList[m.receiver].add(m);
+            if (messageCount[m.receiver] == null) messageCount[m.receiver] = 0;
+            messageCount[m.receiver]++;
+          } else {
+            ids.add(m.receiver);
+            if (messageList[m.sender] == null)
+              messageList[m.sender] = <Message>[];
+            messageList[m.sender].add(m);
+            if (messageCount[m.sender] == null) messageCount[m.sender] = 0;
+            messageCount[m.sender]++;
+          }
+        }
+        setState(() {});
+      });
+    });
+  }
 }

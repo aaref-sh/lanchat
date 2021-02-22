@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/main_screen.dart';
 import 'package:flutter_app/widget/button.dart';
 import 'package:flutter_app/widget/first.dart';
-import 'package:flutter_app/widget/forgot.dart';
 import 'package:flutter_app/widget/inputEmail.dart';
 import 'package:flutter_app/widget/password.dart';
 import 'package:flutter_app/widget/textLogin.dart';

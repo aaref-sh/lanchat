@@ -6,7 +6,9 @@ import 'main_screen.dart';
 int last = 0;
 BubbleStyle bs(int x, int i) {
   if (x == 0) return heading;
-  if (i == 0 || msglist[i].sender != msglist[i - 1].sender) {
+  if (i == 0 ||
+      messageList[other_user][i].sender !=
+          messageList[other_user][i - 1].sender) {
     last = x;
     return x == this_user ? me : he;
   }

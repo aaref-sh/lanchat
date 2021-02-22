@@ -81,7 +81,7 @@ Future<void> checkuser(context) async {
     int id = int.parse(responseJson.toString());
     if (id > 0) {
       this_user = id;
-      save(id);
+      await save(id);
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => Home()));
       return;
