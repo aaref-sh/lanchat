@@ -35,6 +35,7 @@ class _ChatWithState extends State<ChatWith> {
   @override
   void initState() {
     other_user = widget.userId;
+    newmessages[other_user] = false;
     super.initState();
     textFieldController = new TextEditingController()
       ..addListener(() {
@@ -42,6 +43,13 @@ class _ChatWithState extends State<ChatWith> {
           _message = textFieldController.text.trim();
         });
       });
+
+    timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
+      if (newmessages[other_user]) {
+        newmessages[other_user] = false;
+        setState(() {});
+      }
+    });
   }
 
   @override

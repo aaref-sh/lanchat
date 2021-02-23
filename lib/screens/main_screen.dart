@@ -22,6 +22,7 @@ Databasehelper databasehelper = Databasehelper();
 Map<int, List<Message>> messageList;
 Map<int, int> messageCount = {};
 Set<int> ids = {};
+Map<int, bool> newmessages = {};
 
 class Tabber extends StatefulWidget {
   Tabber({Key key, this.title}) : super(key: key);
@@ -114,7 +115,10 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                 context,
                 MaterialPageRoute(
                     builder: (context) => ChatWith(userId: ids.elementAt(i)))),
-            leading: Icon(Icons.message),
+            leading: Icon(Icons.person),
+            onLongPress: () async {
+              await deletechat(ids.elementAt(i));
+            },
           );
         });
     return list;
@@ -129,19 +133,30 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
       'Content-type': 'application/json',
       'Accept': 'application/json',
     };
-
+    int old = messageList.length;
     http.Response response = await http.post(url, body: body, headers: headers);
     List<dynamic> responseJson = json.decode(response.body);
     Message ms;
-    String msg;
+    String msg, dat;
     int sender;
-    if (responseJson != null)
+    if (responseJson != null) {
       for (int i = 0; i < responseJson.length; i++) {
         msg = responseJson[i]["msg"];
         sender = responseJson[i]["sender"];
         ms = Message(sender, this_user, msg);
         ms.id = await databasehelper.insertMsg(ms);
+        dat = responseJson[i]["date"].toString().replaceAll('T', ' ');
+        ms.date = DateTime.parse(dat);
+        if (messageList[ms.sender] == null)
+          messageList[ms.sender] = <Message>[];
+        messageList[ms.sender].add(ms);
+        if (messageCount[ms.sender] == null) messageCount[ms.sender] = 0;
+        messageCount[ms.sender]++;
+        ids.add(ms.sender);
+        newmessages[ms.sender] = true;
       }
+      setState(() {});
+    }
     print(responseJson);
   }
 
@@ -161,7 +176,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
             if (messageCount[m.receiver] == null) messageCount[m.receiver] = 0;
             messageCount[m.receiver]++;
           } else {
-            ids.add(m.receiver);
+            ids.add(m.sender);
             if (messageList[m.sender] == null)
               messageList[m.sender] = <Message>[];
             messageList[m.sender].add(m);
@@ -172,5 +187,12 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         setState(() {});
       });
     });
+  }
+
+  deletechat(int id) async {
+    messageList.removeWhere((key, v) => key == id);
+    messageCount.removeWhere((key, value) => key == id);
+    ids.remove(id);
+    setState(() {});
   }
 }
