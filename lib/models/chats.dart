@@ -37,3 +37,25 @@ class Message {
     this._date = DateTime.parse(map['date'].toString());
   }
 }
+
+class User {
+  int _id;
+  String _name;
+  User(this._id, this._name);
+  int get id => _id;
+  String get name => _name;
+  set id(int id) => this._id = id;
+  set name(String name) => this._name = name;
+
+  Map<String, dynamic> toMap() {
+    var user = Map<String, dynamic>();
+    if (id != null) user['id'] = _id;
+    user['name'] = _name;
+    return user;
+  }
+
+  User.fromMap(Map<String, dynamic> user) {
+    this._id = int.parse(user['id'].toString());
+    this._name = user['name'].toString();
+  }
+}

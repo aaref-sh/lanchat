@@ -17,7 +17,7 @@ class Login extends StatelessWidget {
           if (val == 0) {
             return LoginPage();
           } else {
-            this_user = val;
+            thisUser = val;
             return Home();
           }
         });

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'main_screen.dart';
 import 'package:bubble/bubble.dart';
@@ -28,14 +29,14 @@ class _ChatWithState extends State<ChatWith> {
   String _message = '';
   var emojiheight = 0.0;
   TextEditingController textFieldController;
-  final _controller = ScrollController();
+  final _scrollController = ScrollController();
 
   Timer timer;
 
   @override
   void initState() {
     other_user = widget.userId;
-    newmessages[other_user] = false;
+    newmessages[other_user] = 0;
     super.initState();
     textFieldController = new TextEditingController()
       ..addListener(() {
@@ -45,8 +46,8 @@ class _ChatWithState extends State<ChatWith> {
       });
 
     timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
-      if (newmessages[other_user]) {
-        newmessages[other_user] = false;
+      if (newmessages[other_user] > 0) {
+        newmessages[other_user] = 0;
         setState(() {});
       }
     });
@@ -64,7 +65,7 @@ class _ChatWithState extends State<ChatWith> {
       appBar: AppBar(
           backgroundColor: Colors.blue[400],
           title: Text(
-            'chat with $other_user',
+            names[other_user],
           )),
       body: Container(
           decoration: BoxDecoration(
@@ -185,7 +186,7 @@ class _ChatWithState extends State<ChatWith> {
   void sendMessageButtonPress() async {
     // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
     if (_message != null && _message != '') {
-      Message ms = Message(this_user, other_user, _message);
+      Message ms = Message(thisUser, other_user, _message);
       ms.id = await databasehelper.insertMsg(ms);
       ms.date = DateTime.now();
       var url = "http://192.168.1.111:80/api/values/insert";
@@ -211,49 +212,51 @@ class _ChatWithState extends State<ChatWith> {
 
   Widget getlist() {
     int count = messageCount[other_user];
-    var list = ListView.builder(
-        itemCount: count,
-        reverse: true,
-        shrinkWrap: true,
-        controller: _controller,
-        itemBuilder: (BuildContext context, int i) {
-          Message msg = messageList[other_user][count - i - 1];
-          return GestureDetector(
-            onLongPress: () {
-              print(msg.id);
-              delete(context, msg.id);
-            },
-            child: Bubble(
-                style: bs(msg.sender, count - i - 1),
-                child: Container(
-                  child: Column(
-                    children: [
-                      Text(msg.msg,
-                          textAlign: ta(msg.msg), textDirection: td(msg.msg)),
-                      Text(
-                        DateFormat('hh:mm a').format(msg.date),
-                        textAlign: msg.sender == this_user
-                            ? TextAlign.right
-                            : TextAlign.left,
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
+    var list = CupertinoScrollbar(
+        controller: _scrollController,
+        child: ListView.builder(
+            itemCount: count,
+            reverse: true,
+            shrinkWrap: true,
+            controller: _scrollController,
+            itemBuilder: (BuildContext context, int i) {
+              Message msg = messageList[other_user][count - i - 1];
+              return GestureDetector(
+                onLongPress: () async {
+                  print(msg.id);
+                  await delete(msg.id);
+                  setState(() {});
+                },
+                child: Bubble(
+                    style: bs(msg.sender, count - i - 1),
+                    child: Container(
+                      child: Column(
+                        children: [
+                          Text(msg.msg,
+                              textAlign: ta(msg.msg),
+                              textDirection: td(msg.msg)),
+                          Text(
+                            DateFormat('hh:mm a').format(msg.date),
+                            textAlign: msg.sender == thisUser
+                                ? TextAlign.right
+                                : TextAlign.left,
+                            style:
+                                TextStyle(fontSize: 11, color: Colors.black54),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )),
-          );
-        });
+                    )),
+              );
+            }));
     last = 0;
     return list;
   }
+}
 
-  void delete(BuildContext context, int messageid) async {
-    int result = await databasehelper.deleteMsg(messageid);
-    setState(() {
-      if (result != 0) {
-        messageCount[other_user]--;
-        messageList[other_user]
-            .removeWhere((element) => element.id == messageid);
-      }
-    });
+delete(messageid) async {
+  int result = await databasehelper.deleteMsg(messageid);
+  if (result != 0) {
+    messageCount[other_user]--;
+    messageList[other_user].removeWhere((element) => element.id == messageid);
   }
 }

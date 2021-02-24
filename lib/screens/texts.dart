@@ -10,10 +10,10 @@ BubbleStyle bs(int x, int i) {
       messageList[other_user][i].sender !=
           messageList[other_user][i - 1].sender) {
     last = x;
-    return x == this_user ? me : he;
+    return x == thisUser ? me : he;
   }
   last = x;
-  return x == this_user ? me2 : he2;
+  return x == thisUser ? me2 : he2;
 }
 
 BubbleStyle me = BubbleStyle(

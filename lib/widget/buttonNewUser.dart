@@ -79,7 +79,7 @@ Future<void> createuser(BuildContext context) async {
     int id = int.parse(responseJson.toString());
     if (id > 0) {
       await save(id);
-      this_user = id;
+      thisUser = id;
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => Home()));
       return;

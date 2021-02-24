@@ -12,7 +12,8 @@ class Databasehelper {
   String colreceiver = 'receiver';
   String colmsg = 'msg';
   String coldate = 'date';
-
+  String usertable = 'users';
+  String colname = 'name';
   Databasehelper._createinstance();
 
   factory Databasehelper() {
@@ -38,6 +39,8 @@ class Databasehelper {
     await db.execute(
         '''CREATE TABLE $chattable ($colid INTEGER PRIMARY KEY AUTOINCREMENT, $colmsg TEXT, 
         $colsender TEXT,$colreceiver TEXT,$coldate DATETIME DEFAULT (DATETIME('now')))''');
+    await db.execute(
+        '''CREATE TABLE $usertable ( $colid INTEGER, $colname TEXT )''');
   }
 
   Future<List<Map<String, dynamic>>> getMsgMap() async {
@@ -46,9 +49,21 @@ class Databasehelper {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> getUserMap() async {
+    Database db = await this.database;
+    var result = await db.query(usertable);
+    return result;
+  }
+
   Future<int> insertMsg(Message msg) async {
     Database db = await this.database;
     var result = await db.insert(chattable, msg.toMap());
+    return result;
+  }
+
+  Future<int> insertuser(User user) async {
+    Database db = await this.database;
+    var result = await db.insert(usertable, user.toMap());
     return result;
   }
 
@@ -59,16 +74,16 @@ class Databasehelper {
     return result;
   }
 
+  Future<int> deleteList(int otherUser) async {
+    var db = await this.database;
+    int result = await db.rawDelete(
+        'DELETE FROM $chattable WHERE $colsender = $otherUser OR $colreceiver = $otherUser');
+    return result;
+  }
+
   Future<void> query(String query) async {
     var db = await this.database;
     await db.execute(query);
-  }
-
-  Future<int> getcount(int sender, int receiver) async {
-    Database db = await this.database;
-    List<Map<String, dynamic>> x = await db.rawQuery(
-        'Select * FROM $chattable WHERE ( $colsender = $sender AND $colreceiver = $receiver )OR ($colreceiver = $sender AND $colsender = $receiver )');
-    return Sqflite.firstIntValue(x);
   }
 
   Future<List<Message>> getMessaeList() async {
@@ -79,5 +94,13 @@ class Databasehelper {
       msgList.add(Message.fromMap(msgMapList[i]));
     }
     return msgList;
+  }
+
+  Future<List<User>> getUserList() async {
+    var userMapList = await getUserMap();
+    List<User> userList = <User>[];
+    for (int i = 0; i < userMapList.length; i++)
+      userList.add(User.fromMap(userMapList[i]));
+    return userList;
   }
 }
