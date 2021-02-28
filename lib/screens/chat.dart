@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
 import 'main_screen.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +20,6 @@ bool firstload = true;
 int otherUser = 1;
 
 class _ChatWithState extends State<ChatWith> {
-  // ignore: non_constant_identifier_names
-
   String _message = '';
   var emojiheight = 0.0;
   TextEditingController textFieldController;
@@ -43,9 +39,10 @@ class _ChatWithState extends State<ChatWith> {
         });
       });
 
-    timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
+    timer = Timer.periodic(Duration(milliseconds: 350), (Timer t) {
       if (newmessages[otherUser] > 0) {
         newmessages[otherUser] = 0;
+        databasehelper.deleteUnreaded(otherUser);
         setState(() {});
       }
     });
@@ -184,25 +181,15 @@ class _ChatWithState extends State<ChatWith> {
   void sendMessageButtonPress() async {
     // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
     if (_message != null && _message != '') {
+      await hubConnection
+          .invoke("sendmessage", args: <Object>[thisUser, otherUser, _message]);
+
       Message ms = Message(thisUser, otherUser, _message);
       ms.id = await databasehelper.insertMsg(ms);
       ms.date = DateTime.now();
-      var url = "http://192.168.1.111:80/api/values/insert";
-      var body = json.encode(ms.toMap());
-
-      Map<String, String> headers = {
-        'Content-type': 'application/json',
-        'Accept': 'application/json',
-      };
-
-      http.Response response =
-          await http.post(url, body: body, headers: headers);
-      final responseJson = json.decode(response.body);
-      print(responseJson);
       setState(() {
         messageList[otherUser].add(ms);
         messageCount[otherUser]++;
-        //updatemessagelist();
       });
     }
     textFieldController.clear();

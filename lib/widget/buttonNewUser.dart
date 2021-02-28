@@ -88,7 +88,7 @@ class _ButtonNewUserState extends State<ButtonNewUser> {
       if (id > 0) {
         thisUser = id;
         await save(id);
-        hubConnection.stop();
+        await hubConnection.stop();
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => Home()));
         return;

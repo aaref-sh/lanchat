@@ -7,12 +7,14 @@ class Databasehelper {
   static Databasehelper _databasehelper;
   static Database _database;
   String chattable = 'message';
+  String unreadedtable = 'unreaded';
   String colid = 'id';
   String colsender = 'sender';
   String colreceiver = 'receiver';
   String colmsg = 'msg';
   String coldate = 'date';
   String usertable = 'users';
+  String colcount = 'count';
   String colname = 'name';
   Databasehelper._createinstance();
 
@@ -41,6 +43,8 @@ class Databasehelper {
         $colsender TEXT,$colreceiver TEXT,$coldate DATETIME DEFAULT (DATETIME('now')))''');
     await db.execute(
         '''CREATE TABLE $usertable ( $colid INTEGER, $colname TEXT )''');
+    await db.execute(
+        '''CREATE TABLE $unreadedtable ( $colsender INTEGER, $colcount TEXT )''');
   }
 
   Future<List<Map<String, dynamic>>> getMsgMap() async {
@@ -52,6 +56,12 @@ class Databasehelper {
   Future<List<Map<String, dynamic>>> getUserMap() async {
     Database db = await this.database;
     var result = await db.query(usertable);
+    return result;
+  }
+
+  Future<List<Map<String, dynamic>>> getUnReadedMap() async {
+    Database db = await this.database;
+    var result = await db.query(unreadedtable);
     return result;
   }
 
@@ -67,11 +77,23 @@ class Databasehelper {
     return result;
   }
 
+  Future<int> insertunreaded(unreaded) async {
+    Database db = await this.database;
+    var result = await db.insert(unreadedtable, unreaded.toMap());
+    return result;
+  }
+
   Future<int> deleteMsg(int msgid) async {
     var db = await this.database;
     int result =
         await db.rawDelete('DELETE FROM $chattable WHERE $colid = $msgid');
     return result;
+  }
+
+  Future<int> deleteUnreaded(int sender) async {
+    var db = await this.database;
+    return await db
+        .rawDelete('DELETE FROM $unreadedtable WHERE $colsender = $sender');
   }
 
   Future<int> deleteList(int otherUser) async {
@@ -102,5 +124,13 @@ class Databasehelper {
     for (int i = 0; i < userMapList.length; i++)
       userList.add(User.fromMap(userMapList[i]));
     return userList;
+  }
+
+  Future<List<UnReaded>> getUnReadedList() async {
+    var unreadedMapList = await getUnReadedMap();
+    List<UnReaded> unreadedList = <UnReaded>[];
+    for (int i = 0; i < unreadedMapList.length; i++)
+      unreadedList.add(UnReaded.fromMap(unreadedMapList[i]));
+    return unreadedList;
   }
 }

@@ -59,3 +59,25 @@ class User {
     this._name = user['name'].toString();
   }
 }
+
+class UnReaded {
+  int _sender;
+  int _count;
+  UnReaded(this._sender, this._count);
+  set sender(int sender) => this._sender = sender;
+  set count(int count) => this._count = count;
+  int get sender => _sender;
+  int get count => _count;
+
+  Map<String, dynamic> toMap() {
+    var map = Map<String, dynamic>();
+    map['sender'] = this._sender;
+    map['count'] = this._count;
+    return map;
+  }
+
+  UnReaded.fromMap(unreaded) {
+    this._sender = unreaded['sender'];
+    this._count = unreaded['count'];
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/widget/buttonNewUser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signalr_client/signalr_client.dart';
 import 'inputEmail.dart';
@@ -80,6 +81,8 @@ class _ButtonLoginState extends State<ButtonLogin> {
 
   void _getid(List<Object> arguments) {}
   checkuser(context) async {
+    if (hubConnection.state == HubConnectionState.Disconnected)
+      return wrongalert(context, false);
     String user, pass;
     user = usernamecontroller.text;
     pass = passwordcontroller.text;
@@ -88,7 +91,7 @@ class _ButtonLoginState extends State<ButtonLogin> {
       if (id != null) {
         await save(id);
         thisUser = id;
-        hubConnection.stop();
+        await hubConnection.stop();
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => Home()));
         return;
@@ -96,7 +99,7 @@ class _ButtonLoginState extends State<ButtonLogin> {
     } catch (e) {}
     usernamecontroller.clear();
     passwordcontroller.clear();
-    wrongalert(context);
+    wrongalert(context, true);
   }
 
   void _setid(List<Object> arguments) {
@@ -104,11 +107,13 @@ class _ButtonLoginState extends State<ButtonLogin> {
   }
 }
 
-void wrongalert(BuildContext context) => showDialog(
+void wrongalert(context, x) => showDialog(
     context: context,
     builder: (BuildContext context) => AlertDialog(
-          title: Text("Wrong Information"),
-          content: Text("Your username or password is incorrect"),
+          title: Text(x ? "Wrong Information" : "Connecting failed"),
+          content: Text(x
+              ? "Your username or password is incorrect"
+              : "check you internet connection and try again"),
         ));
 
 save(int id) async {

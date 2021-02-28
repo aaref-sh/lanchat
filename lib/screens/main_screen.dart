@@ -38,11 +38,10 @@ class Tabber extends StatefulWidget {
 }
 
 // ignore: non_constant_identifier_names
+final serverurl = "http://192.168.1.111:5000/messagehub";
+HubConnection hubConnection;
 
 class _TabberState extends State<Tabber> with TickerProviderStateMixin {
-  final serverurl = "http://192.168.1.111:5000/messagehub";
-  HubConnection hubConnection;
-
   MotionTabController _tabController;
   ScrollController _scrollController = ScrollController();
   int val = 0;
@@ -115,15 +114,14 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         ));
   }
 
-  void initSignalR() {
+  Future<void> initSignalR() async {
     hubConnection = HubConnectionBuilder().withUrl(serverurl).build();
     hubConnection
         .onclose((error) => print('connection closed because of: $error'));
     hubConnection.on("newmessages", _newmessages);
     hubConnection.on("idok", _idok);
     hubConnection.on("getid", _getid);
-    hubConnection.on("setidname", _setidname);
-    hubConnection.start();
+    await hubConnection.start();
   }
 
   Future<void> _getid(List<Object> arguments) async =>
@@ -147,12 +145,17 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
       messageList[sender].add(m);
       if (messageCount[sender] == null) messageCount[sender] = 0;
       messageCount[sender]++;
-      if (names[sender] == null)
-        await hubConnection.invoke("getidname", args: <Object>[sender]);
+      if (names[sender] == null) {
+        names[sender] =
+            await hubConnection.invoke("getidname", args: <Object>[sender]);
+        databasehelper.insertuser(User(sender, names[sender]));
+      }
       ids.add(sender);
       await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
       if (newmessages[sender] == null) newmessages[sender] = 0;
       newmessages[sender]++;
+      databasehelper.deleteUnreaded(sender);
+      databasehelper.insertunreaded(UnReaded(sender, newmessages[sender]));
     }
     setState(() {});
   }
@@ -186,6 +189,8 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     dbFuture.then((database) {
       Future<List<Message>> messageListFuture = databasehelper.getMessaeList();
       Future<List<User>> userListFuture = databasehelper.getUserList();
+      Future<List<UnReaded>> unreadedListFuture =
+          databasehelper.getUnReadedList();
       messageListFuture.then((msglst) {
         messageList = {};
         for (var m in msglst) {
@@ -209,6 +214,9 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
       userListFuture.then((usrlst) {
         for (var i in usrlst) names[i.id] = i.name;
         setState(() {});
+      });
+      unreadedListFuture.then((unreadedlist) {
+        for (var i in unreadedlist) newmessages[i.sender] = i.count;
       });
     });
   }
@@ -262,6 +270,4 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               ]);
         });
   }
-
-  void _setidname(List<Object> args) => names[args[0]] = args[1];
 }
