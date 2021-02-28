@@ -8,9 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/texts.dart';
 import 'package:emoji_pick/emoji_pick.dart';
 import 'package:flutter_app/models/chats.dart';
-import 'package:flutter_app/models/databasehelper.dart';
 import 'package:intl/intl.dart';
-import 'package:sqflite/sqflite.dart';
 
 class ChatWith extends StatefulWidget {
   final int userId; // receives the value
@@ -21,7 +19,7 @@ class ChatWith extends StatefulWidget {
 }
 
 bool firstload = true;
-int other_user = 1;
+int otherUser = 1;
 
 class _ChatWithState extends State<ChatWith> {
   // ignore: non_constant_identifier_names
@@ -35,8 +33,8 @@ class _ChatWithState extends State<ChatWith> {
 
   @override
   void initState() {
-    other_user = widget.userId;
-    newmessages[other_user] = 0;
+    otherUser = widget.userId;
+    newmessages[otherUser] = 0;
     super.initState();
     textFieldController = new TextEditingController()
       ..addListener(() {
@@ -46,8 +44,8 @@ class _ChatWithState extends State<ChatWith> {
       });
 
     timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
-      if (newmessages[other_user] > 0) {
-        newmessages[other_user] = 0;
+      if (newmessages[otherUser] > 0) {
+        newmessages[otherUser] = 0;
         setState(() {});
       }
     });
@@ -65,7 +63,7 @@ class _ChatWithState extends State<ChatWith> {
       appBar: AppBar(
           backgroundColor: Colors.blue[400],
           title: Text(
-            names[other_user],
+            names[otherUser],
           )),
       body: Container(
           decoration: BoxDecoration(
@@ -186,7 +184,7 @@ class _ChatWithState extends State<ChatWith> {
   void sendMessageButtonPress() async {
     // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
     if (_message != null && _message != '') {
-      Message ms = Message(thisUser, other_user, _message);
+      Message ms = Message(thisUser, otherUser, _message);
       ms.id = await databasehelper.insertMsg(ms);
       ms.date = DateTime.now();
       var url = "http://192.168.1.111:80/api/values/insert";
@@ -202,8 +200,8 @@ class _ChatWithState extends State<ChatWith> {
       final responseJson = json.decode(response.body);
       print(responseJson);
       setState(() {
-        messageList[other_user].add(ms);
-        messageCount[other_user]++;
+        messageList[otherUser].add(ms);
+        messageCount[otherUser]++;
         //updatemessagelist();
       });
     }
@@ -211,7 +209,7 @@ class _ChatWithState extends State<ChatWith> {
   }
 
   Widget getlist() {
-    int count = messageCount[other_user];
+    int count = messageCount[otherUser];
     var list = CupertinoScrollbar(
         controller: _scrollController,
         child: ListView.builder(
@@ -220,7 +218,7 @@ class _ChatWithState extends State<ChatWith> {
             shrinkWrap: true,
             controller: _scrollController,
             itemBuilder: (BuildContext context, int i) {
-              Message msg = messageList[other_user][count - i - 1];
+              Message msg = messageList[otherUser][count - i - 1];
               return GestureDetector(
                 onLongPress: () async {
                   print(msg.id);
@@ -256,7 +254,7 @@ class _ChatWithState extends State<ChatWith> {
 delete(messageid) async {
   int result = await databasehelper.deleteMsg(messageid);
   if (result != 0) {
-    messageCount[other_user]--;
-    messageList[other_user].removeWhere((element) => element.id == messageid);
+    messageCount[otherUser]--;
+    messageList[otherUser].removeWhere((element) => element.id == messageid);
   }
 }

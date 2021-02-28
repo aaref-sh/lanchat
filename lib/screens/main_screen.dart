@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_app/models/chats.dart';
 import 'package:flutter_app/models/databasehelper.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/chat.dart';
+import 'package:flutter_app/screens/login.page.dart';
+import 'package:flutter_app/widget/button.dart';
 import 'package:motion_tab_bar/MotionTabBarView.dart';
 import 'package:motion_tab_bar/MotionTabController.dart';
 import 'package:motion_tab_bar/motiontabbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signalr_client/signalr_client.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Home extends StatelessWidget {
@@ -25,7 +25,7 @@ Map<int, int> messageCount = {};
 Set<int> ids = {};
 Map<int, int> newmessages = {};
 Map<int, String> names = {};
-int thisUser = 2;
+int thisUser;
 bool b = true;
 
 class Tabber extends StatefulWidget {
@@ -40,24 +40,23 @@ class Tabber extends StatefulWidget {
 // ignore: non_constant_identifier_names
 
 class _TabberState extends State<Tabber> with TickerProviderStateMixin {
+  final serverurl = "http://192.168.1.111:5000/messagehub";
+  HubConnection hubConnection;
+
   MotionTabController _tabController;
   ScrollController _scrollController = ScrollController();
-  Timer timer;
   int val = 0;
   @override
   void initState() {
     //updatemessagelist();
     super.initState();
-
-    timer = Timer.periodic(
-        Duration(milliseconds: 400), (Timer t) => importnewmessages());
+    initSignalR();
     _tabController = MotionTabController(initialIndex: 1, vsync: this);
     setState(() {});
   }
 
   @override
   void dispose() {
-    timer?.cancel();
     super.dispose();
     _tabController.dispose();
   }
@@ -72,6 +71,17 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
+          leading: FlatButton(
+            child: Icon(
+              Icons.logout,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              save(0);
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(builder: (context) => Login()));
+            },
+          ),
         ),
         bottomNavigationBar: MotionTabBar(
           labels: ["Account", "Home", "Dashboard"],
@@ -105,6 +115,48 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         ));
   }
 
+  void initSignalR() {
+    hubConnection = HubConnectionBuilder().withUrl(serverurl).build();
+    hubConnection
+        .onclose((error) => print('connection closed because of: $error'));
+    hubConnection.on("newmessages", _newmessages);
+    hubConnection.on("idok", _idok);
+    hubConnection.on("getid", _getid);
+    hubConnection.on("setidname", _setidname);
+    hubConnection.start();
+  }
+
+  Future<void> _getid(List<Object> arguments) async =>
+      await hubConnection.invoke("confid", args: <Object>[thisUser]);
+
+  void _idok(List<Object> arguments) => print(arguments[0].toString());
+
+  connect() async {
+    await hubConnection.start();
+    setState(() {});
+  }
+
+  Future<void> _newmessages(List<Object> ar) async {
+    print(ar.length);
+    List<dynamic> l = ar[0];
+    for (var msg in l) {
+      int sender = msg['sender'];
+      msg['date'] = DateTime.parse(msg['date'].toString().replaceAll('T', ' '));
+      if (messageList[sender] == null) messageList[sender] = <Message>[];
+      Message m = Message.fromMap(msg);
+      messageList[sender].add(m);
+      if (messageCount[sender] == null) messageCount[sender] = 0;
+      messageCount[sender]++;
+      if (names[sender] == null)
+        await hubConnection.invoke("getidname", args: <Object>[sender]);
+      ids.add(sender);
+      await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
+      if (newmessages[sender] == null) newmessages[sender] = 0;
+      newmessages[sender]++;
+    }
+    setState(() {});
+  }
+
   chatList() {
     int count = ids.length;
     var list = CupertinoScrollbar(
@@ -127,43 +179,6 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               );
             }));
     return list;
-  }
-
-  void importnewmessages() async {
-    Map<String, String> imp = {"receiver": "$thisUser"};
-    var url = "http://192.168.1.111:80/api/values/gets";
-    var body = json.encode(imp);
-
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-    };
-    http.Response response = await http.post(url, body: body, headers: headers);
-    List<dynamic> responseJson = json.decode(response.body);
-    Message ms;
-    String msg, dat;
-    int sender;
-    if (responseJson != null) {
-      for (int i = 0; i < responseJson.length; i++) {
-        msg = responseJson[i]["msg"];
-        sender = responseJson[i]["sender"];
-        ms = Message(sender, thisUser, msg);
-        ms.id = await databasehelper.insertMsg(ms);
-        dat = responseJson[i]["date"].toString().replaceAll('T', ' ');
-        ms.date = DateTime.parse(dat);
-        if (messageList[ms.sender] == null)
-          messageList[ms.sender] = <Message>[];
-        messageList[ms.sender].add(ms);
-        if (messageCount[ms.sender] == null) messageCount[ms.sender] = 0;
-        messageCount[ms.sender]++;
-        ids.add(ms.sender);
-        if (newmessages[ms.sender] == null) newmessages[ms.sender] = 0;
-        newmessages[ms.sender]++;
-        if (names[ms.sender] == null) await getIdName(ms.sender);
-      }
-      setState(() {});
-    }
-    print(responseJson);
   }
 
   updatemessagelist() {
@@ -216,24 +231,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     );
   }
 
-  getIdName(int id) async {
-    Map<String, String> imp = {"id": "$id"};
-    var url = "http://192.168.1.111:80/api/values/getname";
-    var body = json.encode(imp);
-
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-    };
-    http.Response response = await http.post(url, body: body, headers: headers);
-    String name = json.decode(response.body);
-    await databasehelper.insertuser(User(id, name));
-    names[id] = name;
-  }
-
-  String lastMessage(int id) {
-    return messageList[id][messageList[id].length - 1].msg;
-  }
+  String lastMessage(int id) => messageList[id][messageList[id].length - 1].msg;
 
   Future<void> deleteConfirmationDialog(id) async {
     return showDialog<void>(
@@ -264,4 +262,6 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               ]);
         });
   }
+
+  void _setidname(List<Object> args) => names[args[0]] = args[1];
 }

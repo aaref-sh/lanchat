@@ -1,8 +1,7 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signalr_client/signalr_client.dart';
 import 'password.dart';
 import 'newName.dart';
 
@@ -12,6 +11,15 @@ class ButtonNewUser extends StatefulWidget {
 }
 
 class _ButtonNewUserState extends State<ButtonNewUser> {
+  final serverurl = "http://192.168.1.111:5000/messagehub";
+  HubConnection hubConnection;
+  int id;
+  @override
+  void initState() {
+    super.initState();
+    initSignalR();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -56,39 +64,44 @@ class _ButtonNewUserState extends State<ButtonNewUser> {
       ),
     );
   }
-}
 
-Future<void> createuser(BuildContext context) async {
-  String user, pass;
-  user = newusernamecontroller.text;
-  pass = passwordcontroller.text;
-  if (pass.isEmpty || pass.length < 5 || user.isEmpty || user.length < 5) {
-    wrongalert(context, true);
-    return;
+  void initSignalR() {
+    hubConnection = HubConnectionBuilder().withUrl(serverurl).build();
+    hubConnection.onclose((error) => print('connection closed'));
+    hubConnection.on("getid", _getid);
+    hubConnection.on("setid", _setid);
+    hubConnection.start();
   }
-  Map<String, String> lgn = {'name': user, "pass": pass};
-  var url = "http://192.168.1.111:80/api/values/signup";
-  var body = json.encode(lgn);
-  Map<String, String> headers = {
-    'Content-type': 'application/json',
-    'Accept': 'application/json',
-  };
-  http.Response response = await http.post(url, body: body, headers: headers);
-  var responseJson = json.decode(response.body);
-  try {
-    int id = int.parse(responseJson.toString());
-    if (id > 0) {
-      await save(id);
-      thisUser = id;
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => Home()));
+
+  void _getid(List<Object> arguments) {}
+
+  Future<void> createuser(context) async {
+    String user, pass;
+    user = newusernamecontroller.text;
+    pass = passwordcontroller.text;
+    if (pass.isEmpty || pass.length < 5 || user.isEmpty || user.length < 5) {
+      wrongalert(context, true);
       return;
     }
-  } catch (e) {}
-  newusernamecontroller.clear();
-  passwordcontroller.clear();
-  wrongalert(context, false);
-  print(responseJson);
+    try {
+      id = await hubConnection.invoke("signup", args: <Object>[user, pass]);
+      if (id > 0) {
+        thisUser = id;
+        await save(id);
+        hubConnection.stop();
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => Home()));
+        return;
+      }
+    } catch (e) {}
+    newusernamecontroller.clear();
+    passwordcontroller.clear();
+    wrongalert(context, false);
+  }
+
+  Future<void> _setid(List<Object> arguments) async {
+    id = arguments[0] as int;
+  }
 }
 
 void wrongalert(BuildContext context, bool x) => showDialog(

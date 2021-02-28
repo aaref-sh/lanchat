@@ -1,6 +1,5 @@
 import 'package:fancy_on_boarding/fancy_on_boarding.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app/widget/button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
 

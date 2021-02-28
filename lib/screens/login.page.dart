@@ -8,19 +8,34 @@ import 'package:flutter_app/widget/textLogin.dart';
 import 'package:flutter_app/widget/verticalText.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
+  @override
+  _LoginState createState() => _LoginState();
+}
+
+int val;
+
+class _LoginState extends State<Login> {
+  @override
+  void initState() {
+    super.initState();
+    read();
+  }
+
   @override
   Widget build(context) {
-    return FutureBuilder<dynamic>(
-        future: read(),
-        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-          if (val == 0) {
-            return LoginPage();
-          } else {
-            thisUser = val;
-            return Home();
-          }
-        });
+    if (val == null) return Center(child: CircularProgressIndicator());
+    if (val == 0) return LoginPage();
+    return Home();
+  }
+
+  read() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'id';
+    val = prefs.getInt(key) ?? 0;
+    print('read: $val');
+    thisUser = val;
+    setState(() {});
   }
 }
 
@@ -59,12 +74,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
-
-int val = 0;
-read() async {
-  final prefs = await SharedPreferences.getInstance();
-  final key = 'id';
-  val = prefs.getInt(key) ?? 0;
-  print('read: $val');
 }
