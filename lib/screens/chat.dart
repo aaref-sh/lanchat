@@ -17,7 +17,7 @@ class ChatWith extends StatefulWidget {
 }
 
 bool firstload = true;
-int otherUser = 1;
+int otherUser;
 
 class _ChatWithState extends State<ChatWith> {
   String _message = '';
@@ -39,10 +39,10 @@ class _ChatWithState extends State<ChatWith> {
         });
       });
 
-    timer = Timer.periodic(Duration(milliseconds: 350), (Timer t) {
+    timer = Timer.periodic(Duration(milliseconds: 350), (Timer t) async {
       if (newmessages[otherUser] > 0) {
         newmessages[otherUser] = 0;
-        databasehelper.deleteUnreaded(otherUser);
+        await databasehelper.deleteUnreaded(otherUser);
         setState(() {});
       }
     });

@@ -77,7 +77,7 @@ class _ButtonNewUserState extends State<ButtonNewUser> {
 
   Future<void> createuser(context) async {
     String user, pass;
-    user = newusernamecontroller.text;
+    user = newusernamecontroller.text.trim().toLowerCase().replaceAll(' ', '');
     pass = passwordcontroller.text;
     if (pass.isEmpty || pass.length < 5 || user.isEmpty || user.length < 5) {
       wrongalert(context, true);

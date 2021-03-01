@@ -77,7 +77,7 @@ class UnReaded {
   }
 
   UnReaded.fromMap(unreaded) {
-    this._sender = unreaded['sender'];
-    this._count = unreaded['count'];
+    this._sender = int.parse(unreaded['sender'].toString());
+    this._count = int.parse(unreaded['count'].toString());
   }
 }

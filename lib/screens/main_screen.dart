@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_app/models/chats.dart';
 import 'package:flutter_app/models/databasehelper.dart';
@@ -20,13 +21,13 @@ class Home extends StatelessWidget {
 }
 
 Databasehelper databasehelper = Databasehelper();
-Map<int, List<Message>> messageList;
+Map<int, List<Message>> messageList = {};
 Map<int, int> messageCount = {};
 Set<int> ids = {};
 Map<int, int> newmessages = {};
 Map<int, String> names = {};
 int thisUser;
-bool b = true;
+bool loading = true;
 
 class Tabber extends StatefulWidget {
   Tabber({Key key, this.title}) : super(key: key);
@@ -47,9 +48,13 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   int val = 0;
   @override
   void initState() {
-    //updatemessagelist();
     super.initState();
-    initSignalR();
+
+    var dbFuture = databasehelper.initializedatabase();
+    dbFuture.then((database) {
+      updatemessagelist();
+      initSignalR();
+    });
     _tabController = MotionTabController(initialIndex: 1, vsync: this);
     setState(() {});
   }
@@ -62,11 +67,6 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    if (ids.isEmpty && b) {
-      updatemessagelist();
-      b = false;
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -76,6 +76,12 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               color: Colors.white,
             ),
             onPressed: () {
+              AwesomeNotifications().createNotification(
+                  content: NotificationContent(
+                      id: 10,
+                      channelKey: 'basic_channel',
+                      title: 'Simple Notification',
+                      body: 'Simple body'));
               save(0);
               Navigator.pushReplacement(
                   context, MaterialPageRoute(builder: (context) => Login()));
@@ -104,7 +110,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                 child: Text("Account"),
               ),
             ),
-            Container(child: chatList()),
+            getHomeContainer(),
             Container(
               child: Center(
                 child: Text("Dashboard"),
@@ -112,6 +118,19 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
             ),
           ],
         ));
+  }
+
+  Widget getHomeContainer() {
+    if (ids.isEmpty) {
+      if (loading) return Center(child: CircularProgressIndicator());
+
+      return Center(
+        child: Text(
+          "No messages yet",
+        ),
+      );
+    }
+    return Container(child: chatList());
   }
 
   Future<void> initSignalR() async {
@@ -154,8 +173,9 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
       await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
       if (newmessages[sender] == null) newmessages[sender] = 0;
       newmessages[sender]++;
-      databasehelper.deleteUnreaded(sender);
-      databasehelper.insertunreaded(UnReaded(sender, newmessages[sender]));
+      await databasehelper.deleteUnreaded(sender);
+      await databasehelper
+          .insertunreaded(UnReaded(sender, newmessages[sender]));
     }
     setState(() {});
   }
@@ -184,41 +204,31 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     return list;
   }
 
-  updatemessagelist() {
-    final Future<Database> dbFuture = databasehelper.initializedatabase();
-    dbFuture.then((database) {
-      Future<List<Message>> messageListFuture = databasehelper.getMessaeList();
-      Future<List<User>> userListFuture = databasehelper.getUserList();
-      Future<List<UnReaded>> unreadedListFuture =
-          databasehelper.getUnReadedList();
-      messageListFuture.then((msglst) {
-        messageList = {};
-        for (var m in msglst) {
-          if (m.sender == thisUser) {
-            ids.add(m.receiver);
-            if (messageList[m.receiver] == null)
-              messageList[m.receiver] = <Message>[];
-            messageList[m.receiver].add(m);
-            if (messageCount[m.receiver] == null) messageCount[m.receiver] = 0;
-            messageCount[m.receiver]++;
-          } else {
-            ids.add(m.sender);
-            if (messageList[m.sender] == null)
-              messageList[m.sender] = <Message>[];
-            messageList[m.sender].add(m);
-            if (messageCount[m.sender] == null) messageCount[m.sender] = 0;
-            messageCount[m.sender]++;
-          }
-        }
-      });
-      userListFuture.then((usrlst) {
-        for (var i in usrlst) names[i.id] = i.name;
-        setState(() {});
-      });
-      unreadedListFuture.then((unreadedlist) {
-        for (var i in unreadedlist) newmessages[i.sender] = i.count;
-      });
-    });
+  updatemessagelist() async {
+    List<Message> msglst = await databasehelper.getMessaeList();
+    List<User> usrlst = await databasehelper.getUserList();
+    List<UnReaded> unreadedlst = await databasehelper.getUnReadedList();
+
+    for (var m in msglst) {
+      if (m.sender == thisUser) {
+        ids.add(m.receiver);
+        if (messageList[m.receiver] == null)
+          messageList[m.receiver] = <Message>[];
+        messageList[m.receiver].add(m);
+        if (messageCount[m.receiver] == null) messageCount[m.receiver] = 0;
+        messageCount[m.receiver]++;
+      } else {
+        ids.add(m.sender);
+        if (messageList[m.sender] == null) messageList[m.sender] = <Message>[];
+        messageList[m.sender].add(m);
+        if (messageCount[m.sender] == null) messageCount[m.sender] = 0;
+        messageCount[m.sender]++;
+      }
+    }
+    for (var i in unreadedlst) newmessages[i.sender] = i.count;
+    for (var i in usrlst) names[i.id] = i.name;
+    loading = false;
+    setState(() {});
   }
 
   gettrailng(int id) {
@@ -255,6 +265,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                   child: Text('Delete'),
                   onPressed: () async {
                     await databasehelper.deleteList(id);
+                    await databasehelper.deleteUnreaded(id);
                     messageList.removeWhere((key, v) => key == id);
                     messageCount.removeWhere((key, value) => key == id);
                     ids.remove(id);

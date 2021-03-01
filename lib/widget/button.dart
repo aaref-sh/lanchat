@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/widget/buttonNewUser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signalr_client/signalr_client.dart';
 import 'inputEmail.dart';
@@ -81,14 +80,17 @@ class _ButtonLoginState extends State<ButtonLogin> {
 
   void _getid(List<Object> arguments) {}
   checkuser(context) async {
-    if (hubConnection.state == HubConnectionState.Disconnected)
+    if (hubConnection.state == HubConnectionState.Disconnected) {
+      hubConnection.stop();
+      hubConnection.start();
       return wrongalert(context, false);
+    }
     String user, pass;
-    user = usernamecontroller.text;
+    user = usernamecontroller.text.trim().toLowerCase().replaceAll(' ', '');
     pass = passwordcontroller.text;
     try {
       id = await hubConnection.invoke("login", args: <Object>[user, pass]);
-      if (id != null) {
+      if (id != 0) {
         await save(id);
         thisUser = id;
         await hubConnection.stop();
