@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/cupertino.dart';
 import 'main_screen.dart';
 import 'package:bubble/bubble.dart';
@@ -179,7 +180,15 @@ class _ChatWithState extends State<ChatWith> {
   }
 
   void sendMessageButtonPress() async {
-    // databasehelper.query( "insert into message (sender,reciver,msg) values ($this_user,$other_user,'$mesg')");
+    AwesomeNotifications().createNotification(
+        content: NotificationContent(
+            id: 10,
+            channelKey: 'basic_channel',
+            title: 'Simple Notification',
+            showWhen: true,
+            summary: newmessages[otherUser].toString(),
+            body: 'Simple body'));
+
     if (_message != null && _message != '') {
       await hubConnection
           .invoke("sendmessage", args: <Object>[thisUser, otherUser, _message]);
