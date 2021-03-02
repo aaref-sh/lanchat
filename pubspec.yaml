@@ -36,9 +36,13 @@ dependencies:
   cupertino_icons: ^0.1.2
   signalr_client: any
   awesome_notifications: ^0.0.5+5
+  flutter_launcher_icons: "^0.8.0"
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "images/person.png"
 
 dev_dependencies:
   flutter_test:
