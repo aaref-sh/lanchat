@@ -8,6 +8,7 @@ class Databasehelper {
   static Database _database;
   String chattable = 'message';
   String unreadedtable = 'unreaded';
+  String tosendtable = 'tosend';
   String colid = 'id';
   String colsender = 'sender';
   String colreceiver = 'receiver';
@@ -45,55 +46,33 @@ class Databasehelper {
         '''CREATE TABLE $usertable ( $colid INTEGER, $colname TEXT )''');
     await db.execute(
         '''CREATE TABLE $unreadedtable ( $colsender INTEGER, $colcount TEXT )''');
+    await db.execute(
+        '''CREATE TABLE $tosendtable ( $colid INTEGER,$colmsg TEXT,$colreceiver INTEGER )''');
   }
 
   Future<List<Map<String, dynamic>>> getMsgMap() async {
     Database db = await this.database;
-    var result = await db.query(chattable);
-    return result;
+    return await db.query(chattable);
   }
 
   Future<List<Map<String, dynamic>>> getUserMap() async {
     Database db = await this.database;
-    var result = await db.query(usertable);
-    return result;
+    return await db.query(usertable);
   }
 
   Future<List<Map<String, dynamic>>> getUnReadedMap() async {
     Database db = await this.database;
-    var result = await db.query(unreadedtable);
-    return result;
+    return await db.query(unreadedtable);
   }
 
   Future<int> insertMsg(Message msg) async {
     Database db = await this.database;
-    var result = await db.insert(chattable, msg.toMap());
-    return result;
-  }
-
-  Future<int> insertuser(User user) async {
-    Database db = await this.database;
-    var result = await db.insert(usertable, user.toMap());
-    return result;
-  }
-
-  Future<int> insertunreaded(unreaded) async {
-    Database db = await this.database;
-    var result = await db.insert(unreadedtable, unreaded.toMap());
-    return result;
+    return await db.insert(chattable, msg.toMap());
   }
 
   Future<int> deleteMsg(int msgid) async {
     var db = await this.database;
-    int result =
-        await db.rawDelete('DELETE FROM $chattable WHERE $colid = $msgid');
-    return result;
-  }
-
-  Future<int> deleteUnreaded(int sender) async {
-    var db = await this.database;
-    return await db
-        .rawDelete('DELETE FROM $unreadedtable WHERE $colsender = $sender');
+    return await db.rawDelete('DELETE FROM $chattable WHERE $colid = $msgid');
   }
 
   Future<int> deleteList(int otherUser) async {
@@ -126,11 +105,50 @@ class Databasehelper {
     return userList;
   }
 
+  Future<int> insertuser(User user) async {
+    Database db = await this.database;
+    return await db.insert(usertable, user.toMap());
+  }
+
+  Future<int> insertunreaded(unreaded) async {
+    Database db = await this.database;
+    return await db.insert(unreadedtable, unreaded.toMap());
+  }
+
   Future<List<UnReaded>> getUnReadedList() async {
     var unreadedMapList = await getUnReadedMap();
     List<UnReaded> unreadedList = <UnReaded>[];
     for (int i = 0; i < unreadedMapList.length; i++)
       unreadedList.add(UnReaded.fromMap(unreadedMapList[i]));
     return unreadedList;
+  }
+
+  Future<int> deleteUnreaded(int sender) async {
+    var db = await this.database;
+    return await db
+        .rawDelete('DELETE FROM $unreadedtable WHERE $colsender = $sender');
+  }
+
+  Future<int> inserttosend(tosend) async {
+    Database db = await this.database;
+    return await db.insert(tosendtable, tosend.toMap());
+  }
+
+  Future<int> deleteToSend(id) async {
+    var db = await this.database;
+    return await db.rawDelete('DELETE FROM $tosendtable WHERE $colid = $id');
+  }
+
+  Future<List<ToSend>> getToSendList() async {
+    var tosendMapList = await getToSendMap();
+    List<ToSend> tosendList = <ToSend>[];
+    for (int i = 0; i < tosendList.length; i++)
+      tosendList.add(ToSend.fromMap(tosendMapList[i]));
+    return tosendList;
+  }
+
+  Future<List<Map<String, dynamic>>> getToSendMap() async {
+    Database db = await this.database;
+    return await db.query(tosendtable);
   }
 }

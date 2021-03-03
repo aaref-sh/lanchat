@@ -81,3 +81,27 @@ class UnReaded {
     this._count = int.parse(unreaded['count'].toString());
   }
 }
+
+class ToSend {
+  int _id;
+  String _msg;
+  int _receiver;
+  ToSend(this._id, this._msg, this._receiver);
+  set id(id) => this._id = id;
+  int get id => this._id;
+  int get receiver => this._receiver;
+  String get msg => this._msg;
+  Map<String, dynamic> toMap() {
+    var map = Map<String, dynamic>();
+    map['id'] = this._id;
+    map['msg'] = this._msg;
+    map['receiver'] = this._receiver;
+    return map;
+  }
+
+  ToSend.fromMap(tosend) {
+    this._id = int.parse(tosend['id'].toString());
+    this._msg = tosend['msg'].toString();
+    this._receiver = int.parse(tosend['receiver'].toString());
+  }
+}

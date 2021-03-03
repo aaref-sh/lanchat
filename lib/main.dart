@@ -15,7 +15,17 @@ void main() {
             channelName: 'Basic notifications',
             channelDescription: 'Notification channel for basic tests',
             defaultColor: Color(0xFF9D50DD),
-            ledColor: Colors.white)
+            ledColor: Colors.white),
+        NotificationChannel(
+            channelKey: 'grouped',
+            channelName: 'Grouped notifications',
+            channelDescription: 'Notifications with group functionality',
+            groupKey: 'grouped',
+            setAsGroupSummary: true,
+            defaultColor: Colors.lightGreen,
+            ledColor: Colors.lightGreen,
+            vibrationPattern: lowVibrationPattern,
+            importance: NotificationImportance.High)
       ]);
   AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
     print(isAllowed);

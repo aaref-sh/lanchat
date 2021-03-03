@@ -11,7 +11,6 @@ import 'package:motion_tab_bar/MotionTabBarView.dart';
 import 'package:motion_tab_bar/MotionTabController.dart';
 import 'package:motion_tab_bar/motiontabbar.dart';
 import 'package:signalr_client/signalr_client.dart';
-import 'package:sqflite/sqflite.dart';
 
 class Home extends StatelessWidget {
   @override
@@ -76,12 +75,6 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               color: Colors.white,
             ),
             onPressed: () {
-              AwesomeNotifications().createNotification(
-                  content: NotificationContent(
-                      id: 10,
-                      channelKey: 'basic_channel',
-                      title: 'Simple Notification',
-                      body: 'Simple body'));
               save(0);
               Navigator.pushReplacement(
                   context, MaterialPageRoute(builder: (context) => Login()));
@@ -133,7 +126,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     return Container(child: chatList());
   }
 
-  Future<void> initSignalR() async {
+  initSignalR() async {
     hubConnection = HubConnectionBuilder().withUrl(serverurl).build();
     hubConnection
         .onclose((error) => print('connection closed because of: $error'));
@@ -141,27 +134,31 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     hubConnection.on("idok", _idok);
     hubConnection.on("getid", _getid);
     await hubConnection.start();
+    //connect();
   }
 
-  Future<void> _getid(List<Object> arguments) async =>
-      await hubConnection.invoke("confid", args: <Object>[thisUser]);
+  _getid(List<Object> arguments) async {
+    //connect();
+    await hubConnection.invoke("confid", args: <Object>[thisUser]);
+    sendpaindingmessages();
+  }
 
   void _idok(List<Object> arguments) => print(arguments[0].toString());
-
-  connect() async {
-    await hubConnection.start();
-    setState(() {});
-  }
 
   Future<void> _newmessages(List<Object> ar) async {
     print(ar.length);
     List<dynamic> l = ar[0];
     for (var msg in l) {
       int sender = msg['sender'];
-      msg['date'] = DateTime.parse(msg['date'].toString().replaceAll('T', ' '));
-      if (messageList[sender] == null) messageList[sender] = <Message>[];
+
+      ids.add(sender);
       Message m = Message.fromMap(msg);
+
+      m.id = await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
+      msg['date'] = DateTime.parse(msg['date'].toString().replaceAll('T', ' '));
       messageList[sender].add(m);
+
+      if (messageList[sender] == null) messageList[sender] = <Message>[];
       if (messageCount[sender] == null) messageCount[sender] = 0;
       messageCount[sender]++;
       if (names[sender] == null) {
@@ -169,13 +166,19 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
             await hubConnection.invoke("getidname", args: <Object>[sender]);
         databasehelper.insertuser(User(sender, names[sender]));
       }
-      ids.add(sender);
-      await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
       if (newmessages[sender] == null) newmessages[sender] = 0;
       newmessages[sender]++;
       await databasehelper.deleteUnreaded(sender);
       await databasehelper
           .insertunreaded(UnReaded(sender, newmessages[sender]));
+
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: msg['id'],
+              channelKey: 'grouped',
+              title: names[sender],
+              summary: newmessages[otherUser].toString(),
+              body: msg['msg']));
     }
     setState(() {});
   }
@@ -249,6 +252,16 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     );
   }
 
+  sendpaindingmessages() async {
+    List<ToSend> toSendList = await databasehelper.getToSendList();
+    for (var msg in toSendList)
+      if (hubConnection.state == HubConnectionState.Connected) {
+        await hubConnection.invoke("sendmessage",
+            args: <Object>[thisUser, msg.receiver, msg.msg]);
+        databasehelper.deleteToSend(msg.id);
+      }
+  }
+
   String lastMessage(int id) => messageList[id][messageList[id].length - 1].msg;
 
   Future<void> deleteConfirmationDialog(id) async {
@@ -280,5 +293,12 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
                     })
               ]);
         });
+  }
+}
+
+connect() async {
+  if (hubConnection.state == HubConnectionState.Disconnected) {
+    await hubConnection.stop();
+    await hubConnection.start();
   }
 }

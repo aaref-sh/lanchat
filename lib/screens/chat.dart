@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:signalr_client/signalr_client.dart';
 import 'main_screen.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
@@ -180,19 +181,8 @@ class _ChatWithState extends State<ChatWith> {
   }
 
   void sendMessageButtonPress() async {
-    AwesomeNotifications().createNotification(
-        content: NotificationContent(
-            id: 10,
-            channelKey: 'basic_channel',
-            title: 'Simple Notification',
-            showWhen: true,
-            summary: newmessages[otherUser].toString(),
-            body: 'Simple body'));
-
+    connect();
     if (_message != null && _message != '') {
-      await hubConnection
-          .invoke("sendmessage", args: <Object>[thisUser, otherUser, _message]);
-
       Message ms = Message(thisUser, otherUser, _message);
       ms.id = await databasehelper.insertMsg(ms);
       ms.date = DateTime.now();
@@ -200,6 +190,11 @@ class _ChatWithState extends State<ChatWith> {
         messageList[otherUser].add(ms);
         messageCount[otherUser]++;
       });
+      if (hubConnection.state == HubConnectionState.Connected) {
+        await hubConnection.invoke("sendmessage",
+            args: <Object>[thisUser, otherUser, _message]);
+      } else
+        databasehelper.inserttosend(ToSend(ms.id, ms.msg, otherUser));
     }
     textFieldController.clear();
   }
