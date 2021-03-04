@@ -45,17 +45,22 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   MotionTabController _tabController;
   ScrollController _scrollController = ScrollController();
   int val = 0;
+  Timer timer;
   @override
   void initState() {
     super.initState();
+    _tabController = MotionTabController(initialIndex: 1, vsync: this);
+    setState(() {});
 
+    timer = Timer.periodic(Duration(seconds: 10), (Timer t) {
+      connect();
+      setState(() {});
+    });
     var dbFuture = databasehelper.initializedatabase();
     dbFuture.then((database) {
       updatemessagelist();
       initSignalR();
     });
-    _tabController = MotionTabController(initialIndex: 1, vsync: this);
-    setState(() {});
   }
 
   @override
@@ -133,7 +138,9 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     hubConnection.on("newmessages", _newmessages);
     hubConnection.on("idok", _idok);
     hubConnection.on("getid", _getid);
-    await hubConnection.start();
+    try {
+      await hubConnection.start();
+    } catch (_) {}
     //connect();
   }
 
@@ -214,6 +221,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
 
     for (var m in msglst) {
       if (m.sender == thisUser) {
+        newmessages[m.receiver] = 0;
         ids.add(m.receiver);
         if (messageList[m.receiver] == null)
           messageList[m.receiver] = <Message>[];
@@ -221,6 +229,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         if (messageCount[m.receiver] == null) messageCount[m.receiver] = 0;
         messageCount[m.receiver]++;
       } else {
+        newmessages[m.sender] = 0;
         ids.add(m.sender);
         if (messageList[m.sender] == null) messageList[m.sender] = <Message>[];
         messageList[m.sender].add(m);
@@ -262,7 +271,13 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
       }
   }
 
-  String lastMessage(int id) => messageList[id][messageList[id].length - 1].msg;
+  String lastMessage(int id) {
+    String ms = messageList[id][messageList[id].length - 1].msg;
+    if (messageList[id][messageList[id].length - 1].sender == thisUser)
+      ms = 'You: ' + ms;
+    if (ms.length > 40) ms = ms.substring(0, 40) + '...';
+    return ms;
+  }
 
   Future<void> deleteConfirmationDialog(id) async {
     return showDialog<void>(
@@ -296,9 +311,11 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   }
 }
 
-connect() async {
+connect() {
   if (hubConnection.state == HubConnectionState.Disconnected) {
-    await hubConnection.stop();
-    await hubConnection.start();
+    try {
+      hubConnection.stop();
+      hubConnection.start();
+    } catch (_) {}
   }
 }

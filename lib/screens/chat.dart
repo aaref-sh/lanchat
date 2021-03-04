@@ -32,7 +32,6 @@ class _ChatWithState extends State<ChatWith> {
   @override
   void initState() {
     otherUser = widget.userId;
-    newmessages[otherUser] = 0;
     super.initState();
     textFieldController = new TextEditingController()
       ..addListener(() {
@@ -43,8 +42,8 @@ class _ChatWithState extends State<ChatWith> {
 
     timer = Timer.periodic(Duration(milliseconds: 350), (Timer t) async {
       if (newmessages[otherUser] > 0) {
-        newmessages[otherUser] = 0;
         await databasehelper.deleteUnreaded(otherUser);
+        newmessages[otherUser] = 0;
         setState(() {});
       }
     });
@@ -193,8 +192,11 @@ class _ChatWithState extends State<ChatWith> {
       if (hubConnection.state == HubConnectionState.Connected) {
         await hubConnection.invoke("sendmessage",
             args: <Object>[thisUser, otherUser, _message]);
-      } else
-        databasehelper.inserttosend(ToSend(ms.id, ms.msg, otherUser));
+      } else {
+        int o =
+            await databasehelper.inserttosend(ToSend(ms.id, ms.msg, otherUser));
+        print(o);
+      }
     }
     textFieldController.clear();
   }
@@ -244,6 +246,7 @@ class _ChatWithState extends State<ChatWith> {
 
 delete(messageid) async {
   int result = await databasehelper.deleteMsg(messageid);
+  await databasehelper.deleteToSend(messageid);
   if (result != 0) {
     messageCount[otherUser]--;
     messageList[otherUser].removeWhere((element) => element.id == messageid);
