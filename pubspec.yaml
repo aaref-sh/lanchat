@@ -24,19 +24,19 @@ dependencies:
   flutter:
     sdk: flutter
   splashscreen:
-  sqflite: ^1.3.2+3
-  path_provider: ^1.6.27
-  intl: ^0.16.1
-  motion_tab_bar: ^0.1.5
-  fancy_on_boarding: ^1.7.0
-  shared_preferences: ^0.5.12
-  bubble: ^1.1.9+1
-  emoji_pick: ^0.1.0
-  http: ^0.12.0+1
-  cupertino_icons: ^0.1.2
+  sqflite: any
+  path_provider: any
+  intl: any
+  motion_tab_bar: any
+  fancy_on_boarding: any
+  shared_preferences: any
+  bubble: any
+  emoji_pick: any
+  http: any
+  cupertino_icons: any
   signalr_client: any
-  awesome_notifications: ^0.0.5+5
-  flutter_launcher_icons: "^0.8.0"
+  awesome_notifications: any
+  flutter_launcher_icons: any
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
 flutter_icons:

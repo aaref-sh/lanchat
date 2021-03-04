@@ -20,6 +20,7 @@ class Home extends StatelessWidget {
 }
 
 Databasehelper databasehelper = Databasehelper();
+List<User> onlineuserslist = <User>[];
 Map<int, List<Message>> messageList = {};
 Map<int, int> messageCount = {};
 Set<int> ids = {};
@@ -44,6 +45,7 @@ HubConnection hubConnection;
 class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   MotionTabController _tabController;
   ScrollController _scrollController = ScrollController();
+  ScrollController _scrollControlleronlineusers = ScrollController();
   int val = 0;
   Timer timer;
   @override
@@ -109,11 +111,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               ),
             ),
             getHomeContainer(),
-            Container(
-              child: Center(
-                child: Text("Dashboard"),
-              ),
-            ),
+            getOnlineUsers(),
           ],
         ));
   }
@@ -136,8 +134,8 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     hubConnection
         .onclose((error) => print('connection closed because of: $error'));
     hubConnection.on("newmessages", _newmessages);
-    hubConnection.on("idok", _idok);
     hubConnection.on("getid", _getid);
+    hubConnection.on("getonlineusers", _getonlineusers);
     try {
       await hubConnection.start();
     } catch (_) {}
@@ -147,10 +145,8 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   _getid(List<Object> arguments) async {
     //connect();
     await hubConnection.invoke("confid", args: <Object>[thisUser]);
-    sendpaindingmessages();
+    await sendpaindingmessages();
   }
-
-  void _idok(List<Object> arguments) => print(arguments[0].toString());
 
   Future<void> _newmessages(List<Object> ar) async {
     print(ar.length);
@@ -262,13 +258,14 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   }
 
   sendpaindingmessages() async {
-    List<ToSend> toSendList = await databasehelper.getToSendList();
-    for (var msg in toSendList)
+    List<ToSend> tosend = await databasehelper.getToSendList();
+    for (var i in tosend) {
       if (hubConnection.state == HubConnectionState.Connected) {
-        await hubConnection.invoke("sendmessage",
-            args: <Object>[thisUser, msg.receiver, msg.msg]);
-        databasehelper.deleteToSend(msg.id);
+        await hubConnection
+            .invoke("sendmessage", args: <Object>[thisUser, i.receiver, i.msg]);
+        await databasehelper.deleteToSend(i.id);
       }
+    }
   }
 
   String lastMessage(int id) {
@@ -309,6 +306,36 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               ]);
         });
   }
+
+  getOnlineUsers() async {
+    if (onlineuserslist.isEmpty)
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    int count = ids.length;
+    var list = CupertinoScrollbar(
+        controller: _scrollControlleronlineusers,
+        child: ListView.builder(
+            controller: _scrollControlleronlineusers,
+            itemCount: count,
+            itemBuilder: (BuildContext context, int i) {
+              int id = ids.elementAt(i);
+              return ListTile(
+                title: Text(names[id].toString()),
+                subtitle: Text(lastMessage(id)),
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ChatWith(userId: id))),
+                leading: Icon(Icons.person),
+                onLongPress: () => deleteConfirmationDialog(id),
+                trailing: gettrailng(id),
+              );
+            }));
+    return list;
+  }
+
+  void _getonlineusers(List<Object> arguments) {}
 }
 
 connect() {
