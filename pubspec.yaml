@@ -23,7 +23,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  splashscreen:
   sqflite: any
   path_provider: any
   intl: any
