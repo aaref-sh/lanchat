@@ -131,7 +131,8 @@ class Databasehelper {
 
   Future<int> inserttosend(tosend) async {
     Database db = await this.database;
-    return await db.insert(tosendtable, tosend.toMap());
+    var res = await db.insert(tosendtable, tosend.toMap());
+    return res;
   }
 
   Future<int> deleteToSend(id) async {
@@ -142,8 +143,7 @@ class Databasehelper {
   Future<List<ToSend>> getToSendList() async {
     var tosendMapList = await getToSendMap();
     List<ToSend> tosendList = <ToSend>[];
-    for (int i = 0; i < tosendList.length; i++)
-      tosendList.add(ToSend.fromMap(tosendMapList[i]));
+    for (var i in tosendMapList) tosendList.add(ToSend.fromMap(i));
     return tosendList;
   }
 

@@ -55,7 +55,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     setState(() {});
 
     timer = Timer.periodic(Duration(seconds: 10), (Timer t) {
-      connect();
+      // connect();
       setState(() {});
     });
     var dbFuture = databasehelper.initializedatabase();
@@ -91,8 +91,8 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         bottomNavigationBar: MotionTabBar(
           labels: ["Account", "Home", "Dashboard"],
           initialSelectedTab: "Home",
-          tabIconColor: Colors.green[900],
-          tabSelectedColor: Colors.red[900],
+          tabIconColor: Colors.blue[500],
+          tabSelectedColor: Colors.blue[400],
           onTabItemSelected: (int value) {
             print(value);
             setState(() {
@@ -100,7 +100,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
             });
           },
           icons: [Icons.account_box, Icons.home, Icons.menu],
-          textStyle: TextStyle(color: Colors.red[900]),
+          textStyle: TextStyle(color: Colors.blue[500]),
         ),
         body: MotionTabBarView(
           controller: _tabController,
@@ -145,7 +145,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
   _getid(List<Object> arguments) async {
     //connect();
     await hubConnection.invoke("confid", args: <Object>[thisUser]);
-    await sendpaindingmessages();
+    await sendpendingmessages();
   }
 
   Future<void> _newmessages(List<Object> ar) async {
@@ -159,9 +159,9 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
 
       m.id = await databasehelper.insertMsg(Message(sender, m.receiver, m.msg));
       msg['date'] = DateTime.parse(msg['date'].toString().replaceAll('T', ' '));
-      messageList[sender].add(m);
 
       if (messageList[sender] == null) messageList[sender] = <Message>[];
+      messageList[sender].add(m);
       if (messageCount[sender] == null) messageCount[sender] = 0;
       messageCount[sender]++;
       if (names[sender] == null) {
@@ -257,7 +257,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
     );
   }
 
-  sendpaindingmessages() async {
+  sendpendingmessages() async {
     List<ToSend> tosend = await databasehelper.getToSendList();
     for (var i in tosend) {
       if (hubConnection.state == HubConnectionState.Connected) {
@@ -307,7 +307,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         });
   }
 
-  getOnlineUsers() async {
+  Widget getOnlineUsers() {
     if (onlineuserslist.isEmpty)
       return Center(
         child: CircularProgressIndicator(),
