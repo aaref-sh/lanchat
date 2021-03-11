@@ -188,14 +188,11 @@ class _ChatWithState extends State<ChatWith> {
         messageList[otherUser].add(ms);
         messageCount[otherUser]++;
       });
-      if (hubConnection.state == HubConnectionState.Connected) {
+      if (hubConnection.state == HubConnectionState.Connected)
         await hubConnection.invoke("sendmessage",
             args: <Object>[thisUser, otherUser, _message]);
-      } else {
-        int o =
-            await databasehelper.inserttosend(ToSend(ms.id, ms.msg, otherUser));
-        print(o);
-      }
+      else
+        await databasehelper.inserttosend(ToSend(ms.id, ms.msg, otherUser));
     }
     textFieldController.clear();
   }

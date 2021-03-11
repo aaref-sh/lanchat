@@ -111,7 +111,7 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
               ),
             ),
             getHomeContainer(),
-            getOnlineUsers(),
+            onlineUsers(),
           ],
         ));
   }
@@ -135,7 +135,6 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         .onclose((error) => print('connection closed because of: $error'));
     hubConnection.on("newmessages", _newmessages);
     hubConnection.on("getid", _getid);
-    hubConnection.on("getonlineusers", _getonlineusers);
     try {
       await hubConnection.start();
     } catch (_) {}
@@ -307,35 +306,51 @@ class _TabberState extends State<Tabber> with TickerProviderStateMixin {
         });
   }
 
-  Widget getOnlineUsers() {
-    if (onlineuserslist.isEmpty)
+  Widget onlineUsers() {
+    if (hubConnection.state == HubConnectionState.Disconnected)
+      return Center(
+        child: Text('You are offline'),
+      );
+
+    if (onlineuserslist.isEmpty) {
+      getonlineusers();
       return Center(
         child: CircularProgressIndicator(),
       );
-    int count = ids.length;
+    }
     var list = CupertinoScrollbar(
         controller: _scrollControlleronlineusers,
         child: ListView.builder(
             controller: _scrollControlleronlineusers,
-            itemCount: count,
+            itemCount: onlineuserslist.length,
             itemBuilder: (BuildContext context, int i) {
-              int id = ids.elementAt(i);
+              var usr = onlineuserslist[i];
               return ListTile(
-                title: Text(names[id].toString()),
-                subtitle: Text(lastMessage(id)),
+                title: Text(usr.name),
+                //subtitle: Text(lastMessage(id)),
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => ChatWith(userId: id))),
+                        builder: (context) => ChatWith(userId: usr.id))),
                 leading: Icon(Icons.person),
-                onLongPress: () => deleteConfirmationDialog(id),
-                trailing: gettrailng(id),
+                //onLongPress: () => deleteConfirmationDialog(id),
+                trailing: Icon(Icons.message_outlined),
               );
             }));
     return list;
   }
 
-  void _getonlineusers(List<Object> arguments) {}
+  void getonlineusers() async {
+    var userlist = await hubConnection.invoke("getonlineusers");
+    User usr;
+    for (var i in userlist) {
+      usr.id = i['id'];
+      usr.name = i['name'];
+      onlineuserslist.add(usr);
+      names[i['id']] = i['name'];
+    }
+    setState(() {});
+  }
 }
 
 connect() {
